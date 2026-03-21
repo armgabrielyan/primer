@@ -1,4 +1,4 @@
-# Shared Command: `status`
+# Shared Command: `primer-status`
 
 Report current progress and next action.
 

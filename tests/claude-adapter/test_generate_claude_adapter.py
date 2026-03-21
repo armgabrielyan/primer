@@ -42,11 +42,11 @@ class ClaudeAdapterGenerationTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, msg=result.stderr)
 
             self.assertTrue((out / "CLAUDE.md").exists())
-            self.assertTrue((out / ".claude" / "commands" / "build.md").exists())
-            self.assertTrue((out / ".claude" / "commands" / "next-milestone.md").exists())
-            self.assertTrue((out / ".claude" / "commands" / "check.md").exists())
-            self.assertTrue((out / ".claude" / "commands" / "explain.md").exists())
-            self.assertTrue((out / ".claude" / "commands" / "status.md").exists())
+            self.assertTrue((out / ".claude" / "commands" / "primer-build.md").exists())
+            self.assertTrue((out / ".claude" / "commands" / "primer-next-milestone.md").exists())
+            self.assertTrue((out / ".claude" / "commands" / "primer-check.md").exists())
+            self.assertTrue((out / ".claude" / "commands" / "primer-explain.md").exists())
+            self.assertTrue((out / ".claude" / "commands" / "primer-status.md").exists())
 
     def test_state_block_defaults_and_recipe_path(self) -> None:
         with tempfile.TemporaryDirectory(prefix="primer-claude-gen-") as tmp:
@@ -68,7 +68,7 @@ class ClaudeAdapterGenerationTests(unittest.TestCase):
             self.assertIn("verified_milestone_id: null", content)
             self.assertIn("track: learner", content)
             self.assertIn("stack_id: c-x86", content)
-            self.assertIn("/build", content)
+            self.assertIn("`primer-build`", content)
 
     def test_track_and_milestone_overrides(self) -> None:
         with tempfile.TemporaryDirectory(prefix="primer-claude-gen-") as tmp:
@@ -99,8 +99,15 @@ class ClaudeAdapterGenerationTests(unittest.TestCase):
             )
             self.assertEqual(result.returncode, 0, msg=result.stderr)
 
+            generated_names = {
+                "build.md": "primer-build.md",
+                "next-milestone.md": "primer-next-milestone.md",
+                "check.md": "primer-check.md",
+                "explain.md": "primer-explain.md",
+                "status.md": "primer-status.md",
+            }
             for name in ["build.md", "next-milestone.md", "check.md", "explain.md", "status.md"]:
-                generated = read(out / ".claude" / "commands" / name)
+                generated = read(out / ".claude" / "commands" / generated_names[name])
                 shared = read(SHARED_DIR / name)
                 self.assertEqual(generated, shared, msg=f"mismatch in {name}")
 

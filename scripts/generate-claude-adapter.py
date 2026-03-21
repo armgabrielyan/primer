@@ -9,6 +9,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from adapter_context import render_adapter_context
+
 try:
     import yaml
 except Exception as exc:  # pragma: no cover
@@ -19,6 +21,13 @@ except Exception as exc:  # pragma: no cover
 ROOT = Path(__file__).resolve().parent.parent
 SHARED_DIR = ROOT / "adapters" / "_shared"
 REQUIRED_SHARED = ["next-milestone.md", "check.md", "explain.md", "status.md", "build.md"]
+COMMAND_NAME_MAP = {
+    "build.md": "primer-build.md",
+    "check.md": "primer-check.md",
+    "explain.md": "primer-explain.md",
+    "status.md": "primer-status.md",
+    "next-milestone.md": "primer-next-milestone.md",
+}
 
 
 def load_yaml(path: Path) -> Any:
@@ -78,56 +87,6 @@ def validate_recipe(doc: Any, recipe_yaml: Path) -> tuple[str, str, list[str], s
     return recipe_id, title, milestone_ids, stack_id
 
 
-def render_claude_md(
-    *,
-    recipe_title: str,
-    recipe_id: str,
-    recipe_path: Path,
-    workspace_root: Path,
-    milestone_id: str,
-    track: str,
-    stack_id: str,
-) -> str:
-    return f"""# Primer — {recipe_title}
-
-```yaml
-primer_state:
-  recipe_id: {recipe_id}
-  recipe_path: {recipe_path.as_posix()}
-  workspace_root: {workspace_root.as_posix()}
-  milestone_id: {milestone_id}
-  verified_milestone_id: null
-  track: {track}
-  stack_id: {stack_id}
-```
-
-## Recipe location
-
-{recipe_path.as_posix()}/
-
-## Workspace root
-
-{workspace_root.as_posix()}/
-
-## Rules
-
-- Always read the current milestone `agent.md` before starting work.
-- Work in this project workspace, not in the `primer` repository.
-- Build the current milestone in small steps and do not implement future milestones early.
-- Run current milestone `tests/check.sh` before declaring completion.
-- Only run `/next-milestone` after `/check` has marked the current milestone as verified.
-- Use shared command contracts in `.claude/commands/` for behavior rules.
-
-## Available commands
-
-- `/build` — implement the current milestone step by step
-- `/next-milestone` — advance state only after the milestone is already verified
-- `/check` — run current milestone checks
-- `/explain` — show current milestone explanation
-- `/status` — show current state and progress
-"""
-
-
 def generate(recipe_dir: Path, output_dir: Path, track: str, milestone_id: str | None) -> None:
     recipe_dir = recipe_dir.resolve()
     output_dir = output_dir.resolve()
@@ -148,7 +107,7 @@ def generate(recipe_dir: Path, output_dir: Path, track: str, milestone_id: str |
     commands_dir.mkdir(parents=True, exist_ok=True)
 
     claude_md.write_text(
-        render_claude_md(
+        render_adapter_context(
             recipe_title=recipe_title,
             recipe_id=recipe_id,
             recipe_path=recipe_dir,
@@ -164,7 +123,7 @@ def generate(recipe_dir: Path, output_dir: Path, track: str, milestone_id: str |
         src = SHARED_DIR / filename
         if not src.exists():
             raise ValueError(f"{src}: required shared command definition missing")
-        shutil.copyfile(src, commands_dir / filename)
+        shutil.copyfile(src, commands_dir / COMMAND_NAME_MAP[filename])
 
 
 def main() -> int:

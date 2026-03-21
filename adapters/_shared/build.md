@@ -1,4 +1,4 @@
-# Shared Command: `build`
+# Shared Command: `primer-build`
 
 Build only the current milestone's required work, step by step.
 
@@ -23,7 +23,7 @@ Build only the current milestone's required work, step by step.
    - confirm understanding before moving to the next sub-step
 7. In builder track:
    - implement the smallest complete change that moves the milestone forward
-8. Recommend running `check` once the build step is complete.
+8. Recommend running `primer-check` once the build step is complete.
 
 ## State Mutation
 

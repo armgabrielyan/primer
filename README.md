@@ -19,9 +19,9 @@ If you want to start a project, follow this flow:
 1. Pick a recipe from **Available recipes** below.
 2. Generate adapter files for your AI tool.
 3. Open your project with that tool and follow milestone commands.
-4. Use `build` to work only on the current milestone.
-5. Use `check` to verify that milestone.
-6. Use `next-milestone` only after `check` has passed.
+4. Use `primer-build` to work only on the current milestone.
+5. Use `primer-check` to verify that milestone.
+6. Use `primer-next-milestone` only after `primer-check` has passed.
 
 ## Available recipes (projects)
 
@@ -67,10 +67,11 @@ Generate Claude Code adapter files:
 This creates:
 
 - `CLAUDE.md`
-- `.claude/commands/next-milestone.md`
-- `.claude/commands/check.md`
-- `.claude/commands/explain.md`
-- `.claude/commands/status.md`
+- `.claude/commands/primer-build.md`
+- `.claude/commands/primer-next-milestone.md`
+- `.claude/commands/primer-check.md`
+- `.claude/commands/primer-explain.md`
+- `.claude/commands/primer-status.md`
 
 Generate Codex adapter files:
 
@@ -81,10 +82,11 @@ Generate Codex adapter files:
 This creates:
 
 - `AGENTS.md`
-- `.codex/next-milestone.md`
-- `.codex/check.md`
-- `.codex/explain.md`
-- `.codex/status.md`
+- `.agents/skills/primer-build/SKILL.md`
+- `.agents/skills/primer-check/SKILL.md`
+- `.agents/skills/primer-explain/SKILL.md`
+- `.agents/skills/primer-status/SKILL.md`
+- `.agents/skills/primer-next-milestone/SKILL.md`
 
 ## Prerequisites
 
@@ -102,13 +104,13 @@ Why these matter:
 
 ## Milestone workflow (inside your AI tool)
 
-Use these commands/tasks milestone by milestone:
+Use these commands/skills milestone by milestone:
 
-- `build`: implement only the current milestone, step by step
-- `check`: run current milestone verification and mark it verified on success
-- `next-milestone`: advance only after the current milestone is already verified
-- `explain`: read the deep-dive explanation
-- `status`: show current milestone and progress
+- `primer-build`: implement only the current milestone, step by step
+- `primer-check`: run current milestone verification and mark it verified on success
+- `primer-next-milestone`: advance only after the current milestone is already verified
+- `primer-explain`: read the deep-dive explanation
+- `primer-status`: show current milestone and progress
 
 ## Repository layout
 

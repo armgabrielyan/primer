@@ -62,20 +62,29 @@ Or for Codex:
 "$PRIMER_ROOT/scripts/generate-codex-adapter" "$PRIMER_ROOT/recipes/operating-system" --output-dir .
 ```
 
-Then in your AI tool, run milestone commands/tasks:
+That generates both:
 
-- `build`
-- `status`
-- `check`
-- `explain`
-- `next-milestone`
+- `AGENTS.md`
+- `.agents/skills/primer-build/SKILL.md`
+- `.agents/skills/primer-check/SKILL.md`
+- `.agents/skills/primer-explain/SKILL.md`
+- `.agents/skills/primer-status/SKILL.md`
+- `.agents/skills/primer-next-milestone/SKILL.md`
+
+Then in your AI tool, run milestone commands/skills:
+
+- `primer-build`
+- `primer-status`
+- `primer-check`
+- `primer-explain`
+- `primer-next-milestone`
 
 Recommended rhythm:
 
 1. Read the current milestone explanation and spec.
-2. Run `build` and implement only that milestone.
-3. Run `check` until it passes.
-4. Run `next-milestone` only after the milestone is verified.
+2. Run `primer-build` and implement only that milestone.
+3. Run `primer-check` until it passes.
+4. Run `primer-next-milestone` only after the milestone is verified.
 
 ## Milestones
 

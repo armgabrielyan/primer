@@ -4,10 +4,11 @@
 from __future__ import annotations
 
 import argparse
-import shutil
 import sys
 from pathlib import Path
 from typing import Any
+
+from adapter_context import render_adapter_context
 
 try:
     import yaml
@@ -18,7 +19,7 @@ except Exception as exc:  # pragma: no cover
 
 ROOT = Path(__file__).resolve().parent.parent
 SHARED_DIR = ROOT / "adapters" / "_shared"
-REQUIRED_SHARED = ["next-milestone.md", "check.md", "explain.md", "status.md", "build.md"]
+SKILL_FILES = ["build.md", "check.md", "explain.md", "status.md", "next-milestone.md"]
 
 
 def load_yaml(path: Path) -> Any:
@@ -28,13 +29,13 @@ def load_yaml(path: Path) -> Any:
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(
-        description="Generate AGENTS.md and .codex task files from a recipe."
+        description="Generate AGENTS.md and .agents/skills repo-local skills from a recipe."
     )
     p.add_argument("recipe_dir", help="Path to recipe directory (contains recipe.yaml)")
     p.add_argument(
         "--output-dir",
         default=".",
-        help="Project root where AGENTS.md and .codex/ will be written",
+        help="Project root where AGENTS.md and .agents/skills will be written",
     )
     p.add_argument(
         "--track",
@@ -78,54 +79,34 @@ def validate_recipe(doc: Any, recipe_yaml: Path) -> tuple[str, str, list[str], s
     return recipe_id, title, milestone_ids, stack_id
 
 
-def render_agents_md(
-    *,
-    recipe_title: str,
-    recipe_id: str,
-    recipe_path: Path,
-    workspace_root: Path,
-    milestone_id: str,
-    track: str,
-    stack_id: str,
-) -> str:
-    return f"""# Primer Agent Context — {recipe_title}
+def render_skill_md(*, skill_name: str, description: str, body: str) -> str:
+    return f"""---
+name: {skill_name}
+description: {description}
+---
 
-```yaml
-primer_state:
-  recipe_id: {recipe_id}
-  recipe_path: {recipe_path.as_posix()}
-  workspace_root: {workspace_root.as_posix()}
-  milestone_id: {milestone_id}
-  verified_milestone_id: null
-  track: {track}
-  stack_id: {stack_id}
-```
-
-## Recipe location
-
-{recipe_path.as_posix()}/
-
-## Workspace root
-
-{workspace_root.as_posix()}/
-
-## Behavior rules
-
-- Read current milestone `agent.md` before implementation.
-- Work in this project workspace, not in the `primer` repository.
-- Build the current milestone in small steps and do not implement future milestones early.
-- Run current milestone `tests/check.sh` before completion.
-- Only advance milestone state after `check` has marked the current milestone as verified.
-- Follow shared task definitions in `.codex/`.
-
-## Available tasks
-
-- `.codex/build.md`
-- `.codex/next-milestone.md`
-- `.codex/check.md`
-- `.codex/explain.md`
-- `.codex/status.md`
+{body}
 """
+
+
+def render_openai_yaml(*, display_name: str, short_description: str, default_prompt: str) -> str:
+    return f"""interface:
+  display_name: "{display_name}"
+  short_description: "{short_description}"
+  default_prompt: "{default_prompt}"
+"""
+
+
+def build_skill_metadata(recipe_id: str, recipe_title: str, shared_filename: str) -> tuple[str, str, str, str]:
+    command_name = shared_filename.removesuffix(".md")
+    skill_name = f"primer-{command_name}"
+    display_name = f"{recipe_title}: {command_name.replace('-', ' ').title()}"
+    short_description = f"{command_name.replace('-', ' ').capitalize()} for the current Primer recipe"
+    description = (
+        f"Use when the user wants to {command_name.replace('-', ' ')} for the current Primer recipe in this repo workspace."
+    )
+    default_prompt = f"Use ${skill_name} for the current recipe milestone."
+    return skill_name, display_name, short_description, description, default_prompt
 
 
 def generate(recipe_dir: Path, output_dir: Path, track: str, milestone_id: str | None) -> None:
@@ -144,11 +125,11 @@ def generate(recipe_dir: Path, output_dir: Path, track: str, milestone_id: str |
         )
 
     agents_md = output_dir / "AGENTS.md"
-    tasks_dir = output_dir / ".codex"
-    tasks_dir.mkdir(parents=True, exist_ok=True)
+    skills_root = output_dir / ".agents" / "skills"
+    skills_root.mkdir(parents=True, exist_ok=True)
 
     agents_md.write_text(
-        render_agents_md(
+        render_adapter_context(
             recipe_title=recipe_title,
             recipe_id=recipe_id,
             recipe_path=recipe_dir,
@@ -160,11 +141,29 @@ def generate(recipe_dir: Path, output_dir: Path, track: str, milestone_id: str |
         encoding="utf-8",
     )
 
-    for filename in REQUIRED_SHARED:
+    for filename in SKILL_FILES:
         src = SHARED_DIR / filename
         if not src.exists():
             raise ValueError(f"{src}: required shared command definition missing")
-        shutil.copyfile(src, tasks_dir / filename)
+        body = src.read_text(encoding="utf-8")
+        skill_name, display_name, short_description, description, default_prompt = build_skill_metadata(
+            recipe_id, recipe_title, filename
+        )
+        skill_dir = skills_root / skill_name
+        skill_agents_dir = skill_dir / "agents"
+        skill_agents_dir.mkdir(parents=True, exist_ok=True)
+        (skill_dir / "SKILL.md").write_text(
+            render_skill_md(skill_name=skill_name, description=description, body=body),
+            encoding="utf-8",
+        )
+        (skill_agents_dir / "openai.yaml").write_text(
+            render_openai_yaml(
+                display_name=display_name,
+                short_description=short_description,
+                default_prompt=default_prompt,
+            ),
+            encoding="utf-8",
+        )
 
 
 def main() -> int:

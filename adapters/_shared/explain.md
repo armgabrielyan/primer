@@ -1,4 +1,4 @@
-# Shared Command: `explain`
+# Shared Command: `primer-explain`
 
 Show or summarize the explanation for the current milestone.
 
