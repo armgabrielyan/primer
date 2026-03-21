@@ -26,6 +26,7 @@ fn main() -> Result<()> {
                 Commands::Init(args) => commands::init::run(&primer_root, args),
                 Commands::Doctor(args) => commands::doctor::run(&primer_root, args),
                 Commands::Status => commands::status::run(&primer_root, &cli.primer_root),
+                Commands::Check => commands::check::run(&primer_root, &cli.primer_root),
                 Commands::Completions { .. } => unreachable!(),
             }
         }

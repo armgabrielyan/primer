@@ -35,6 +35,9 @@ pub enum Commands {
     /// Show current Primer workspace progress
     Status,
 
+    /// Run verification for the current milestone
+    Check,
+
     /// Generate shell completion scripts
     Completions {
         /// Shell to generate completions for

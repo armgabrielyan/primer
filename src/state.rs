@@ -1,5 +1,5 @@
 use anyhow::{Context, Result, anyhow, bail};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -15,12 +15,12 @@ pub struct PrimerState {
     pub stack_id: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 struct StateEnvelope {
     primer_state: StateDoc,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 struct StateDoc {
     recipe_id: String,
     recipe_path: PathBuf,
@@ -73,11 +73,49 @@ pub fn load_from_workspace(dir: &Path) -> Result<PrimerState> {
     )
 }
 
+pub fn write(state: &PrimerState) -> Result<()> {
+    let path = &state.context_path;
+    let text =
+        fs::read_to_string(path).with_context(|| format!("failed to read {}", path.display()))?;
+    let (start, end) = yaml_block_span(&text)
+        .ok_or_else(|| anyhow!("no primer_state YAML block found in {}", path.display()))?;
+
+    let yaml = serde_yaml::to_string(&StateEnvelope {
+        primer_state: StateDoc {
+            recipe_id: state.recipe_id.clone(),
+            recipe_path: state.recipe_path.clone(),
+            workspace_root: state.workspace_root.clone(),
+            milestone_id: state.milestone_id.clone(),
+            verified_milestone_id: state.verified_milestone_id.clone(),
+            track: state.track.clone(),
+            stack_id: state.stack_id.clone(),
+        },
+    })
+    .context("failed to serialize primer_state")?;
+
+    let yaml = yaml.strip_prefix("---\n").unwrap_or(&yaml);
+    let replacement = format!("```yaml\n{}```", yaml);
+
+    let mut updated = String::with_capacity(text.len() + replacement.len());
+    updated.push_str(&text[..start]);
+    updated.push_str(&replacement);
+    updated.push_str(&text[end..]);
+
+    fs::write(path, updated).with_context(|| format!("failed to write {}", path.display()))?;
+    Ok(())
+}
+
 fn extract_yaml_block(text: &str) -> Option<String> {
+    let (start, end) = yaml_block_span(text)?;
+    let open_len = "```yaml".len();
+    Some(text[start + open_len..end - "```".len()].trim().to_string())
+}
+
+fn yaml_block_span(text: &str) -> Option<(usize, usize)> {
     let start = text.find("```yaml")?;
     let rest = &text[start + "```yaml".len()..];
     let end = rest.find("```")?;
-    Some(rest[..end].trim().to_string())
+    Some((start, start + "```yaml".len() + end + "```".len()))
 }
 
 fn absolute_path(path: &Path) -> Result<PathBuf> {
