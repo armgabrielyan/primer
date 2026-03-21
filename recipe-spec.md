@@ -64,11 +64,13 @@ Each milestone item requires:
 - `id` (format `NN-name`, e.g. `01-bootloader`)
 - `title` (string)
 - `demo` (string)
+- `prerequisites` (non-empty string array of executable/tool names required for that milestone)
 
 Constraints:
 
 - IDs must be unique.
 - Milestones must be ordered by numeric `NN` prefix.
+- `prerequisites` should be cumulative for the milestone. If milestone `03` still needs tools from milestone `02`, include them in milestone `03`.
 
 ## Naming Rules
 

@@ -1,0 +1,18 @@
+id: invalid-yaml-missing-milestone-prerequisites
+title: Invalid Fixture Missing Milestone Prerequisites
+description: Milestones must declare prerequisites.
+difficulty: medium
+stack:
+  id: bash
+  label: Bash
+  tools:
+    - bash
+tracks:
+  learner:
+    description: Learner
+  builder:
+    description: Builder
+milestones:
+  - id: 01-start
+    title: Start
+    demo: Demo text.

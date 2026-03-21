@@ -20,24 +20,78 @@ milestones:
   - id: 01-bootloader
     title: Bootloader
     demo: QEMU boots and prints a bootloader message.
+    prerequisites:
+      - python3
+      - nasm
+      - qemu-system-i386
+      - make
   - id: 02-kernel-entry
     title: Kernel Entry Point
     demo: Control passes from bootloader to kernel entry code.
+    prerequisites:
+      - python3
+      - nasm
+      - qemu-system-i386
+      - make
+      - i686-elf-gcc
+      - i686-elf-ld
   - id: 03-vga-output
     title: VGA Text Driver
     demo: Kernel prints text via VGA memory.
+    prerequisites:
+      - python3
+      - nasm
+      - qemu-system-i386
+      - make
+      - i686-elf-gcc
+      - i686-elf-ld
   - id: 04-interrupts
     title: GDT + Interrupts
     demo: Keyboard input is handled via IRQ.
+    prerequisites:
+      - python3
+      - nasm
+      - qemu-system-i386
+      - make
+      - i686-elf-gcc
+      - i686-elf-ld
   - id: 05-memory
     title: Memory Manager
     demo: Basic allocator alloc/free behavior is validated.
+    prerequisites:
+      - python3
+      - nasm
+      - qemu-system-i386
+      - make
+      - i686-elf-gcc
+      - i686-elf-ld
   - id: 06-scheduler
     title: Process Scheduler
     demo: Two processes time-share via round-robin.
+    prerequisites:
+      - python3
+      - nasm
+      - qemu-system-i386
+      - make
+      - i686-elf-gcc
+      - i686-elf-ld
   - id: 07-filesystem
     title: Simple Filesystem
     demo: Kernel reads data from a disk image.
+    prerequisites:
+      - python3
+      - nasm
+      - qemu-system-i386
+      - make
+      - i686-elf-gcc
+      - i686-elf-ld
   - id: 08-shell
     title: Userspace Shell
     demo: A basic interactive shell runs in QEMU.
+    prerequisites:
+      - python3
+      - nasm
+      - qemu-system-i386
+      - make
+      - i686-elf-gcc
+      - i686-elf-ld

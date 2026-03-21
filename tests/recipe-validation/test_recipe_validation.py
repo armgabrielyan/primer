@@ -41,6 +41,12 @@ class RecipeValidationTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("duplicate milestone id", result.stderr)
 
+    def test_yaml_validator_rejects_missing_milestone_prerequisites(self) -> None:
+        recipe_dir = FIXTURES / "invalid-yaml-missing-milestone-prerequisites"
+        result = run_cmd("python3", "scripts/validate-recipe-yaml.py", str(recipe_dir))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("prerequisites", result.stderr)
+
     def test_milestone_validator_accepts_valid_recipe(self) -> None:
         recipe_dir = FIXTURES / "valid-minimal"
         result = run_cmd("python3", "scripts/validate-milestones.py", str(recipe_dir))

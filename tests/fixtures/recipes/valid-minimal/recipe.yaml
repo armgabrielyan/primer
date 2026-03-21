@@ -16,3 +16,5 @@ milestones:
   - id: 01-start
     title: Start
     demo: Prints a demo message.
+    prerequisites:
+      - bash

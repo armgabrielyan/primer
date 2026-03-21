@@ -133,7 +133,7 @@ def validate(path: Path) -> list[str]:
                 if not isinstance(item, dict):
                     errs.append(error(path, field_base, "must be an object"))
                     continue
-                for key in ["id", "title", "demo"]:
+                for key in ["id", "title", "demo", "prerequisites"]:
                     if key not in item:
                         errs.append(error(path, f"{field_base}.{key}", "is required"))
 
@@ -154,6 +154,23 @@ def validate(path: Path) -> list[str]:
                 demo = item.get("demo")
                 if demo is not None and not isinstance(demo, str):
                     errs.append(error(path, f"{field_base}.demo", "must be a string"))
+
+                prerequisites = item.get("prerequisites")
+                if prerequisites is not None:
+                    if not isinstance(prerequisites, list) or not prerequisites:
+                        errs.append(
+                            error(path, f"{field_base}.prerequisites", "must be a non-empty array")
+                        )
+                    else:
+                        for j, tool in enumerate(prerequisites):
+                            if not isinstance(tool, str) or not tool.strip():
+                                errs.append(
+                                    error(
+                                        path,
+                                        f"{field_base}.prerequisites[{j}]",
+                                        "must be a non-empty string",
+                                    )
+                                )
 
             seen = set()
             for ms_id in ids:
