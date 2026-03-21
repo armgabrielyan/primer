@@ -45,6 +45,9 @@ pub enum Commands {
     /// Show the explanation for the current milestone
     Explain,
 
+    /// Show current milestone build guidance
+    Build,
+
     /// Generate shell completion scripts
     Completions {
         /// Shell to generate completions for
