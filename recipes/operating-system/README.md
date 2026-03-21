@@ -1,6 +1,25 @@
 # Build Your Own Operating System
 
-This is the v0.1 canonical recipe used to validate contract, adapter, and milestone flow.
+This recipe takes you from a 512-byte bootloader to a minimal shell through 8 milestones.
+
+## Table of Contents
+
+- [What you will build](#what-you-will-build)
+- [Prerequisites](#prerequisites)
+- [How to start](#how-to-start)
+- [Milestones](#milestones)
+- [Recipe validation](#recipe-validation)
+
+## What you will build
+
+- BIOS boot sector
+- Kernel entry in C
+- VGA output
+- Interrupt handling
+- Memory manager
+- Round-robin scheduler
+- Simple filesystem read path
+- Minimal shell prompt
 
 ## Prerequisites
 
@@ -8,6 +27,28 @@ This is the v0.1 canonical recipe used to validate contract, adapter, and milest
 - `gcc`
 - `qemu-system-i386`
 - `make`
+
+## How to start
+
+From repo root:
+
+```bash
+scripts/validate-recipe recipes/operating-system
+scripts/generate-claude-adapter recipes/operating-system --output-dir .
+```
+
+Or for Codex:
+
+```bash
+scripts/generate-codex-adapter recipes/operating-system --output-dir .
+```
+
+Then in your AI tool, run milestone commands/tasks:
+
+- `status`
+- `check`
+- `explain`
+- `next-milestone`
 
 ## Milestones
 
@@ -20,9 +61,9 @@ This is the v0.1 canonical recipe used to validate contract, adapter, and milest
 7. Filesystem
 8. Shell
 
-## Validation
+## Recipe validation
 
-Run:
+Validate contract + structure:
 
 ```bash
 scripts/validate-recipe recipes/operating-system
