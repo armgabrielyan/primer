@@ -1,4 +1,4 @@
-# Shared Command: `primer-status`
+# Shared Skill: `primer-status`
 
 Report current progress and next action.
 
@@ -23,7 +23,7 @@ Report current progress and next action.
 
 ## State Mutation
 
-None. State is read-only for this command.
+None. State is read-only for this skill.
 
 ## Failure Modes
 

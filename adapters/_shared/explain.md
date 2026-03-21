@@ -1,4 +1,4 @@
-# Shared Command: `primer-explain`
+# Shared Skill: `primer-explain`
 
 Show or summarize the explanation for the current milestone.
 
@@ -17,7 +17,7 @@ Show or summarize the explanation for the current milestone.
 
 ## State Mutation
 
-None. State is read-only for this command.
+None. State is read-only for this skill.
 
 ## Failure Modes
 

@@ -1,4 +1,4 @@
-# Shared Command: `primer-build`
+# Shared Skill: `primer-build`
 
 Build only the current milestone's required work, step by step.
 
@@ -27,7 +27,7 @@ Build only the current milestone's required work, step by step.
 
 ## State Mutation
 
-None. State is read-only for this command.
+None. State is read-only for this skill.
 
 ## Reproducibility Rules
 

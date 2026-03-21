@@ -1,4 +1,4 @@
-# Shared Command: `primer-next-milestone`
+# Shared Skill: `primer-next-milestone`
 
 Advance to the next milestone only after the current milestone has already been verified.
 

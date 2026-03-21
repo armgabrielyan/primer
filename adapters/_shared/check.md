@@ -1,4 +1,4 @@
-# Shared Command: `primer-check`
+# Shared Skill: `primer-check`
 
 Run verification for the current milestone in the learner project workspace.
 

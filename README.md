@@ -18,7 +18,7 @@ If you want to start a project, follow this flow:
 
 1. Pick a recipe from **Available recipes** below.
 2. Generate adapter files for your AI tool.
-3. Open your project with that tool and follow milestone commands.
+3. Open your project with that tool and follow the Primer milestone skills.
 4. Use `primer-build` to work only on the current milestone.
 5. Use `primer-check` to verify that milestone.
 6. Use `primer-next-milestone` only after `primer-check` has passed.
@@ -98,13 +98,13 @@ This creates:
 
 Why these matter:
 
-- The recipe library generates instructions and commands.
+- The recipe library generates instructions and Primer skills.
 - The learner project workspace contains the actual source files and project `Makefile`.
 - The OS milestones progressively require a real cross-compilation toolchain; system compilers are not enough for the later bare-metal C milestones.
 
 ## Milestone workflow (inside your AI tool)
 
-Use these commands/skills milestone by milestone:
+Use these Primer skills milestone by milestone:
 
 - `primer-build`: implement only the current milestone, step by step
 - `primer-check`: run current milestone verification and mark it verified on success
@@ -116,7 +116,7 @@ Use these commands/skills milestone by milestone:
 
 - `recipe-spec.md`: canonical recipe contract for v0.1
 - `recipes/`: recipes and milestone contracts
-- `adapters/_shared/`: shared command behavior + state model
+- `adapters/_shared/`: shared Primer skill behavior + state model
 - `scripts/`: validators and adapter generators
 - `tests/`: recipe validation, shared command conformance, adapter generation tests
 
