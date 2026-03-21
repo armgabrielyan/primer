@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "TODO: implement milestone 03 demo"
+[ -f boot.bin ] || { echo "boot.bin not found. Run: make"; exit 1; }
+echo "Launching QEMU. Expected serial marker: VGA driver ready"
+exec qemu-system-i386 -drive format=raw,file=boot.bin

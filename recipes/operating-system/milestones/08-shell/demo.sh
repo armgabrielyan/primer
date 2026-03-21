@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "TODO: implement milestone 08 demo"
+[ -f boot.bin ] || { echo "boot.bin not found. Run: make"; exit 1; }
+echo "Launching QEMU. Expected serial marker: shell>"
+exec qemu-system-i386 -drive format=raw,file=boot.bin
