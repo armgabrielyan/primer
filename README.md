@@ -24,6 +24,8 @@ Primer fixes that by giving the agent:
 
 The result is a workflow that feels closer to a guided lab than an open-ended prompt.
 
+Primer is also meant to become a community recipe library. If you want to contribute a new learning path, see [docs/community-recipes.md](docs/community-recipes.md).
+
 ## Installation
 
 ### Install from local source
@@ -228,4 +230,6 @@ This gives the agent a constrained problem and gives you a visible notion of pro
 
 ## Contributing
 
-See `CONTRIBUTING.md` for contributor checks, quality gates, adapter standards, and test requirements.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contributor checks, quality gates, adapter standards, and test requirements.
+
+If you want to propose a new community learning path, start with [docs/community-recipes.md](docs/community-recipes.md).

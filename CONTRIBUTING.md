@@ -2,11 +2,13 @@
 
 This project is contract-driven. Changes are accepted only when schema, structure, and behavior remain deterministic and verifiable.
 
+Primer is also intended to become a community library of learning paths. If you want to contribute a new recipe, start with [docs/community-recipes.md](docs/community-recipes.md).
+
 ## Prerequisites
 
 - Bash
-- Python 3
-- `PyYAML` available to Python runtime
+- Rust toolchain
+- Cargo
 
 ## Core rules
 
@@ -17,25 +19,13 @@ This project is contract-driven. Changes are accepted only when schema, structur
 
 ## Required checks before PR
 
-Single command for all automated test suites:
+Run the automated test suite:
 
 ```bash
-make test
+cargo test
 ```
 
-Full pre-PR check for a specific recipe:
-
-```bash
-make check RECIPE_ID=<recipe-id>
-```
-
-`make check` runs:
-
-1. recipe validation
-2. all automated test suites
-3. milestone script bash syntax checks
-
-If milestone runtime checks require extra dependencies for a specific recipe (for example an emulator), document them in that recipe's README.
+For recipe contributions, also review the recipe's own `README.md` and milestone scripts to make sure the documented prerequisites and checks still match reality.
 
 ## Recipe quality bar
 
@@ -55,11 +45,9 @@ A recipe is ready when:
 
 When changing adapter generation:
 
-1. Update generator scripts in `scripts/`.
+1. Update the Rust generator logic in `src/adapter.rs`.
 2. Keep outputs aligned with `adapters/_shared/*`.
-3. Add or update tests in:
-   - `tests/claude-adapter/`
-   - `tests/codex-adapter/`
+3. Add or update Rust tests for generated outputs.
 
 ## Commit guidance
 

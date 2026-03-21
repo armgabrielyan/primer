@@ -87,9 +87,7 @@ Milestones are cumulative in one working tree. Milestone directories define the 
 Run:
 
 ```bash
-scripts/validate-recipe recipes/<recipe-id>
+cargo test
 ```
 
-This runs:
-1. `recipe.yaml` schema validation
-2. Milestone structure validation
+Recipe validation is handled by Rust tests and the CLI's built-in validator during `primer init`.
