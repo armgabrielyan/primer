@@ -16,6 +16,7 @@ Primer is a good fit if you want to:
 Current recipes:
 
 - `cli-tool`: build a practical task tracker CLI in Python
+- `interpreter-mini`: build a small expression language in Python
 - `operating-system`: build an x86 operating system from bootloader to shell
 
 ## Table of Contents
@@ -267,6 +268,7 @@ Current catalog:
 | Recipe ID | Project | Difficulty | Best starting advice |
 |---|---|---|---|
 | `cli-tool` | Build a Task Tracker CLI | `beginner` | Start here if you are new to Primer, new to AI-assisted building, or want a fast first success |
+| `interpreter-mini` | Build a Mini Expression Interpreter | `intermediate` | Start here after `cli-tool` if you want a more conceptual project with parsing and evaluation |
 | `operating-system` | Build Your Own Operating System | `advanced` | Start with `--track learner` and treat it like a guided lab, not a quick tutorial |
 
 For more detail on the current recipe, see [recipes/operating-system/README.md](recipes/operating-system/README.md).

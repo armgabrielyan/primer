@@ -1,0 +1,42 @@
+id: interpreter-mini
+title: Build a Mini Expression Interpreter
+description: >
+  Build a compact expression language in Python with tokenization, parsing,
+  evaluation, variables, and tests.
+difficulty: intermediate
+stack:
+  id: python-language-tools
+  label: Python Language Tools
+  tools:
+    - python3
+    - bash
+tracks:
+  learner:
+    description: Agent explains language implementation concepts while building.
+  builder:
+    description: Agent implements the interpreter directly with minimal commentary.
+milestones:
+  - id: 01-tokenizer
+    title: Tokenizer
+    demo: Convert source text into a JSON token stream.
+    prerequisites:
+      - python3
+      - bash
+  - id: 02-parser
+    title: Parser
+    demo: Parse arithmetic expressions into an AST with correct precedence.
+    prerequisites:
+      - python3
+      - bash
+  - id: 03-evaluator
+    title: Evaluator
+    demo: Evaluate arithmetic expressions from the AST.
+    prerequisites:
+      - python3
+      - bash
+  - id: 04-variables-tests
+    title: Variables and Tests
+    demo: Run assignment-based programs from a file and pass unit tests.
+    prerequisites:
+      - python3
+      - bash
