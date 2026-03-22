@@ -79,7 +79,7 @@ fn resolve_check_command(checks_dir: &Path) -> Result<CheckCommand> {
                 args: vec![
                     OsString::from("/D"),
                     OsString::from("/C"),
-                    OsString::from(format!("call \"{}\"", cmd_script.display())),
+                    cmd_script.as_os_str().to_os_string(),
                 ],
                 script: cmd_script,
             });
