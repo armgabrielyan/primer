@@ -39,6 +39,29 @@ fn write_windows_check(path: &Path, body: &str) {
 #[cfg(not(windows))]
 fn write_windows_check(_path: &Path, _body: &str) {}
 
+#[cfg(windows)]
+fn canonicalize_for_state(path: &Path) -> PathBuf {
+    let rendered = fs::canonicalize(path)
+        .expect("failed to canonicalize path")
+        .display()
+        .to_string();
+
+    if let Some(stripped) = rendered.strip_prefix(r"\\?\UNC\") {
+        return PathBuf::from(format!(r"\\{}", stripped));
+    }
+
+    if let Some(stripped) = rendered.strip_prefix(r"\\?\") {
+        return PathBuf::from(stripped);
+    }
+
+    PathBuf::from(rendered)
+}
+
+#[cfg(not(windows))]
+fn canonicalize_for_state(path: &Path) -> PathBuf {
+    fs::canonicalize(path).expect("failed to canonicalize path")
+}
+
 fn setup_fixture(label: &str, verified_milestone_id: Option<&str>) -> (PathBuf, PathBuf) {
     let root = temp_dir(label);
     let primer_root = root.join("primer-root");
@@ -155,11 +178,9 @@ echo "beta check passed"
     );
 
     fs::create_dir_all(&workspace_root).expect("failed to create workspace");
-    let primer_root = fs::canonicalize(&primer_root).expect("failed to canonicalize primer root");
-    let workspace_root =
-        fs::canonicalize(&workspace_root).expect("failed to canonicalize workspace root");
-    let recipe_path = fs::canonicalize(primer_root.join("recipes/demo"))
-        .expect("failed to canonicalize recipe path");
+    let primer_root = canonicalize_for_state(&primer_root);
+    let workspace_root = canonicalize_for_state(&workspace_root);
+    let recipe_path = canonicalize_for_state(&primer_root.join("recipes/demo"));
     let verified = verified_milestone_id.unwrap_or("null");
     write_file(
         &workspace_root.join("CLAUDE.md"),
@@ -211,6 +232,7 @@ fn check_failure_keeps_state_unchanged() {
 
     assert!(!output.status.success());
     let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("milestone.ok is missing"));
     assert!(stderr.contains("state was not updated"));
     let context = read_context(&workspace_root);
     assert!(context.contains("verified_milestone_id: null"));

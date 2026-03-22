@@ -4,6 +4,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::bundled;
+use crate::paths;
 
 #[derive(Debug, Clone)]
 pub struct RecipeSummary {
@@ -67,10 +68,7 @@ pub fn source(primer_root: Option<&Path>) -> Result<RecipeSource> {
                     recipes_dir.display()
                 );
             }
-            Ok(RecipeSource::Filesystem(
-                fs::canonicalize(path)
-                    .with_context(|| format!("failed to resolve {}", path.display()))?,
-            ))
+            Ok(RecipeSource::Filesystem(paths::canonicalize(path)?))
         }
         None => Ok(RecipeSource::Bundled),
     }

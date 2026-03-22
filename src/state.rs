@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use crate::paths;
+
 #[derive(Debug, Clone)]
 pub struct PrimerState {
     pub context_path: PathBuf,
@@ -32,7 +34,7 @@ struct StateDoc {
 }
 
 pub fn load_from_workspace(dir: &Path) -> Result<PrimerState> {
-    let dir = absolute_path(dir)?;
+    let dir = paths::absolute(dir)?;
 
     for filename in ["CLAUDE.md", "AGENTS.md", "GEMINI.md"] {
         let path = dir.join(filename);
@@ -58,8 +60,8 @@ pub fn load_from_workspace(dir: &Path) -> Result<PrimerState> {
         return Ok(PrimerState {
             context_path: path,
             recipe_id: state.recipe_id,
-            recipe_path: state.recipe_path,
-            workspace_root: state.workspace_root,
+            recipe_path: paths::normalize(state.recipe_path),
+            workspace_root: paths::normalize(state.workspace_root),
             milestone_id: state.milestone_id,
             verified_milestone_id: state.verified_milestone_id,
             track: state.track,
@@ -118,19 +120,10 @@ fn yaml_block_span(text: &str) -> Option<(usize, usize)> {
     Some((start, start + "```yaml".len() + end + "```".len()))
 }
 
-fn absolute_path(path: &Path) -> Result<PathBuf> {
-    if path.exists() {
-        return fs::canonicalize(path)
-            .with_context(|| format!("failed to resolve {}", path.display()));
-    }
-
-    let current_dir = std::env::current_dir().context("failed to read current directory")?;
-    Ok(current_dir.join(path))
-}
-
 #[cfg(test)]
 mod tests {
     use super::load_from_workspace;
+    use crate::paths;
     use std::fs;
     use std::path::PathBuf;
     use std::time::{SystemTime, UNIX_EPOCH};
@@ -152,9 +145,9 @@ mod tests {
         let recipe_path = workspace.join(".primer/recipes/demo");
         fs::create_dir_all(&recipe_path).expect("failed to create recipe path");
         let recipe_path =
-            fs::canonicalize(&recipe_path).expect("failed to canonicalize recipe path");
+            paths::canonicalize(&recipe_path).expect("failed to canonicalize recipe path");
         let workspace_root =
-            fs::canonicalize(&workspace).expect("failed to canonicalize workspace root");
+            paths::canonicalize(&workspace).expect("failed to canonicalize workspace root");
 
         fs::write(
             workspace.join("GEMINI.md"),
@@ -167,8 +160,8 @@ mod tests {
         .expect("failed to write GEMINI.md");
 
         let state = load_from_workspace(&workspace).expect("failed to load state");
-        let context_path =
-            fs::canonicalize(workspace.join("GEMINI.md")).expect("failed to canonicalize context");
+        let context_path = paths::canonicalize(&workspace.join("GEMINI.md"))
+            .expect("failed to canonicalize context");
         assert_eq!(state.context_path, context_path);
         assert_eq!(state.recipe_id, "demo");
         assert_eq!(state.milestone_id, "01-alpha");

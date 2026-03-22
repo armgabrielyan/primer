@@ -2,6 +2,7 @@ mod adapter;
 mod bundled;
 mod cli;
 mod commands;
+mod paths;
 mod recipe;
 mod state;
 mod ui;

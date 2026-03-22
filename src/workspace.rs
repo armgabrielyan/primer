@@ -2,13 +2,15 @@ use anyhow::{Context, Result, bail};
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use crate::paths;
+
 pub struct PreparedWorkspace {
     pub target_dir: PathBuf,
     pub existed: bool,
 }
 
 pub fn prepare(requested_path: &Path, force: bool, dry_run: bool) -> Result<PreparedWorkspace> {
-    let target_dir = absolute_path(requested_path)?;
+    let target_dir = paths::absolute(requested_path)?;
 
     let existed = target_dir.exists();
     if existed {
@@ -33,14 +35,4 @@ pub fn prepare(requested_path: &Path, force: bool, dry_run: bool) -> Result<Prep
         target_dir,
         existed,
     })
-}
-
-fn absolute_path(path: &Path) -> Result<PathBuf> {
-    if path.exists() {
-        return fs::canonicalize(path)
-            .with_context(|| format!("failed to resolve {}", path.display()));
-    }
-
-    let current_dir = std::env::current_dir().context("failed to read current directory")?;
-    Ok(current_dir.join(path))
 }
