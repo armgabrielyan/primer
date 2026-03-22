@@ -1,0 +1,23 @@
+name: Release Please
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    if: github.event.workflow_run.conclusion == 'success'
+    uses: armgabrielyan/shared-workflows/.github/workflows/release-please.yml@v1.0.0
+    with:
+      config_file: release-please-config.json
+      manifest_file: .release-please-manifest.json
+    secrets:
+      release_please_token: ${{ secrets.RELEASE_PLEASE_TOKEN }}

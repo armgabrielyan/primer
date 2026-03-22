@@ -28,6 +28,62 @@ Primer is also meant to become a community recipe library. If you want to contri
 
 ## Installation
 
+### Quick install (macOS/Linux)
+
+```bash
+curl -sSf https://raw.githubusercontent.com/armgabrielyan/primer/main/install.sh | sh
+```
+
+### Homebrew (macOS/Linux)
+
+```bash
+brew install armgabrielyan/tap/primer
+```
+
+### npm/npx
+
+```bash
+npm install -g primer-cli
+
+# Or run directly
+npx primer-cli list
+```
+
+This package downloads the matching prebuilt `primer` binary for your platform during install.
+
+### Cargo
+
+```bash
+cargo install primer
+```
+
+### Native binaries
+
+Download prebuilt archives from the [GitHub Releases](https://github.com/armgabrielyan/primer/releases) page.
+
+| Platform | Architecture | Download |
+|---|---|---|
+| Linux | x86_64 (glibc) | `primer-VERSION-x86_64-unknown-linux-gnu.tar.gz` |
+| Linux | x86_64 (musl/static) | `primer-VERSION-x86_64-unknown-linux-musl.tar.gz` |
+| Linux | ARM64 | `primer-VERSION-aarch64-unknown-linux-gnu.tar.gz` |
+| macOS | Intel | `primer-VERSION-x86_64-apple-darwin.tar.gz` |
+| macOS | Apple Silicon | `primer-VERSION-aarch64-apple-darwin.tar.gz` |
+| Windows | x86_64 | `primer-VERSION-x86_64-pc-windows-msvc.zip` |
+
+### Build from source
+
+```bash
+git clone https://github.com/armgabrielyan/primer
+cd primer
+cargo build --release
+```
+
+The binary will be available at:
+
+```bash
+./target/release/primer
+```
+
 ### Install from local source
 
 ```bash
@@ -38,18 +94,6 @@ This installs `primer` into Cargo's bin directory so you can run it directly:
 
 ```bash
 primer list
-```
-
-### Build from source
-
-```bash
-cargo build --release
-```
-
-The binary will be available at:
-
-```bash
-./target/release/primer
 ```
 
 ### Shell completions

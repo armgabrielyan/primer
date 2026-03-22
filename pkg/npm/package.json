@@ -1,0 +1,41 @@
+{
+  "name": "primer-cli",
+  "version": "0.1.0",
+  "description": "Primer CLI for AI-guided project recipes and milestone workflows",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/armgabrielyan/primer.git"
+  },
+  "author": "Armen Gabrielyan",
+  "license": "MIT",
+  "keywords": [
+    "primer",
+    "cli",
+    "ai",
+    "recipes",
+    "learning",
+    "agents"
+  ],
+  "bin": {
+    "primer": "bin/primer"
+  },
+  "scripts": {
+    "postinstall": "node scripts/install.js"
+  },
+  "files": [
+    "bin/",
+    "scripts/"
+  ],
+  "engines": {
+    "node": ">=14"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ]
+}

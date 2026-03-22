@@ -1,0 +1,11 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    uses: armgabrielyan/shared-workflows/.github/workflows/rust-ci.yml@v1.0.0
