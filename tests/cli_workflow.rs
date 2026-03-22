@@ -31,6 +31,14 @@ fn make_executable(path: &Path) {
     }
 }
 
+#[cfg(windows)]
+fn write_windows_check(path: &Path, body: &str) {
+    write_file(path, body);
+}
+
+#[cfg(not(windows))]
+fn write_windows_check(_path: &Path, _body: &str) {}
+
 fn setup_fixture(label: &str, verified_milestone_id: Option<&str>) -> (PathBuf, PathBuf) {
     let root = temp_dir(label);
     let primer_root = root.join("primer-root");
@@ -99,6 +107,10 @@ echo "alpha check passed"
 "#,
     );
     make_executable(&recipe_path.join("milestones/01-alpha/tests/check.sh"));
+    write_windows_check(
+        &recipe_path.join("milestones/01-alpha/tests/check.cmd"),
+        "@echo off\r\nif not exist milestone.ok (\r\n  echo FAIL: milestone.ok is missing 1>&2\r\n  exit /b 1\r\n)\r\necho alpha check passed\r\n",
+    );
 
     write_file(
         &recipe_path.join("milestones/02-beta/spec.md"),
@@ -137,6 +149,10 @@ echo "beta check passed"
 "#,
     );
     make_executable(&recipe_path.join("milestones/02-beta/tests/check.sh"));
+    write_windows_check(
+        &recipe_path.join("milestones/02-beta/tests/check.cmd"),
+        "@echo off\r\necho beta check passed\r\n",
+    );
 
     fs::create_dir_all(&workspace_root).expect("failed to create workspace");
     let primer_root = fs::canonicalize(&primer_root).expect("failed to canonicalize primer root");
