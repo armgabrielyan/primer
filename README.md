@@ -112,12 +112,12 @@ The result feels closer to a guided lab than an open-ended prompt.
 
 ## Is Primer Beginner-Friendly?
 
-The workflow is beginner-friendly. The current recipe catalog is not beginner-easy yet.
+The workflow is beginner-friendly. The current recipe catalog is not broadly beginner-oriented yet.
 
 That distinction matters:
 
 - Primer itself is designed to be approachable for students, entry-level developers, and people learning with AI assistance.
-- The current flagship recipe, `operating-system`, is still a hard systems project with a real toolchain and low-level concepts.
+- The current flagship recipe, `operating-system`, is still an advanced systems project with a real toolchain and low-level concepts.
 
 If you are a beginner or novice, the recommended path is:
 
@@ -265,7 +265,7 @@ Current catalog:
 
 | Recipe ID | Project | Difficulty | Best starting advice |
 |---|---|---|---|
-| `operating-system` | Build Your Own Operating System | `hard` | Start with `--track learner` and treat it like a guided lab, not a quick tutorial |
+| `operating-system` | Build Your Own Operating System | `advanced` | Start with `--track learner` and treat it like a guided lab, not a quick tutorial |
 
 For more detail on the current recipe, see [recipes/operating-system/README.md](recipes/operating-system/README.md).
 

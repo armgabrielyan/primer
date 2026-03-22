@@ -1,7 +1,7 @@
 id: invalid-milestones-missing-file
 title: Invalid Fixture Missing Milestone File
 description: Milestone file contract should fail for missing files.
-difficulty: easy
+difficulty: beginner
 stack:
   id: bash
   label: Bash

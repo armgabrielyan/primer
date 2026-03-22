@@ -1,7 +1,7 @@
 id: invalid-yaml-duplicate-milestone-id
 title: Invalid Fixture Duplicate Milestone ID
 description: Duplicate milestone IDs should fail schema validation.
-difficulty: medium
+difficulty: intermediate
 stack:
   id: bash
   label: Bash

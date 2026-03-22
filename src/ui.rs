@@ -155,10 +155,9 @@ pub struct DoctorRow {
 
 fn difficulty_color(difficulty: &str) -> Color {
     match difficulty {
-        "easy" => Color::Green,
-        "medium" => Color::Yellow,
-        "hard" => Color::Red,
-        "expert" => Color::Magenta,
+        "beginner" => Color::Green,
+        "intermediate" => Color::Yellow,
+        "advanced" => Color::Red,
         _ => Color::White,
     }
 }

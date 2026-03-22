@@ -41,7 +41,7 @@ fn setup_fixture(label: &str, verified_milestone_id: Option<&str>) -> (PathBuf, 
         &recipe_path.join("recipe.yaml"),
         r#"id: demo
 title: Demo Recipe
-difficulty: easy
+difficulty: beginner
 stack:
   id: test-stack
 milestones:

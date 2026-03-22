@@ -35,7 +35,7 @@ Required top-level keys:
 - `id` (string, kebab-case)
 - `title` (string)
 - `description` (string)
-- `difficulty` (`easy|medium|hard|expert`)
+- `difficulty` (`beginner|intermediate|advanced`)
 - `stack` (object)
 - `tracks` (object)
 - `milestones` (non-empty array)

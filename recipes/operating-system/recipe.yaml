@@ -2,7 +2,7 @@ id: operating-system
 title: Build Your Own Operating System
 description: >
   From bare metal to a userspace shell in QEMU.
-difficulty: hard
+difficulty: advanced
 stack:
   id: c-x86
   label: C + x86 Assembly

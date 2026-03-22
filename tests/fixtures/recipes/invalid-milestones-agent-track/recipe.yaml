@@ -1,7 +1,7 @@
 id: invalid-agent-track
 title: Invalid Agent Track
 description: Fixture with malformed milestone agent instructions.
-difficulty: easy
+difficulty: beginner
 stack:
   id: test-stack
   label: Test Stack

@@ -3,7 +3,7 @@ use serde_yaml::{Mapping, Value};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-const DIFFICULTY_VALUES: &[&str] = &["easy", "medium", "hard", "expert"];
+const DIFFICULTY_VALUES: &[&str] = &["beginner", "intermediate", "advanced"];
 const REQUIRED_MILESTONE_FILES: &[&str] = &[
     "spec.md",
     "agent.md",

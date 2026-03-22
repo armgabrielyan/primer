@@ -1,7 +1,7 @@
 id: valid-minimal
 title: Valid Minimal Recipe
 description: Minimal valid fixture for recipe contract tests.
-difficulty: easy
+difficulty: beginner
 stack:
   id: bash
   label: Bash
