@@ -75,8 +75,12 @@ fn resolve_check_command(checks_dir: &Path) -> Result<CheckCommand> {
         let cmd_script = checks_dir.join("check.cmd");
         if cmd_script.is_file() {
             return Ok(CheckCommand {
-                program: OsString::from("cmd"),
-                args: vec![OsString::from("/C"), cmd_script.as_os_str().to_os_string()],
+                program: OsString::from("cmd.exe"),
+                args: vec![
+                    OsString::from("/D"),
+                    OsString::from("/C"),
+                    OsString::from(format!("call \"{}\"", cmd_script.display())),
+                ],
                 script: cmd_script,
             });
         }

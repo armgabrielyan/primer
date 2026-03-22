@@ -20,14 +20,14 @@ fn write_file(path: &Path, contents: &str) {
     fs::write(path, contents).expect("failed to write file");
 }
 
-fn make_executable(path: &Path) {
+fn make_executable(_path: &Path) {
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
 
-        let mut perms = fs::metadata(path).expect("missing file").permissions();
+        let mut perms = fs::metadata(_path).expect("missing file").permissions();
         perms.set_mode(0o755);
-        fs::set_permissions(path, perms).expect("failed to set permissions");
+        fs::set_permissions(_path, perms).expect("failed to set permissions");
     }
 }
 
