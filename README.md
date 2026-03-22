@@ -127,9 +127,10 @@ primer completions fish
 
 ## 🤖 Tool Integration
 
-Primer currently supports three AI coding tools:
+Primer currently supports four AI coding tools:
 
 - OpenCode
+- Gemini CLI
 - Claude Code
 - Codex
 
@@ -149,6 +150,21 @@ Primer generates:
 - `.opencode/skills/`
 
 These skills are loaded by OpenCode's native skill system, while `AGENTS.md` provides the project rules and Primer workflow context for the workspace.
+
+### Gemini CLI
+
+Use:
+
+```bash
+primer init <recipe-id> --tool gemini --path ~/projects/my-workspace
+```
+
+Primer generates:
+
+- `GEMINI.md`
+- `.gemini/skills/`
+
+Gemini CLI loads `GEMINI.md` as project context and discovers the generated Primer skills from `.gemini/skills/`.
 
 ### Claude Code
 
@@ -233,7 +249,7 @@ The fastest path from zero to working milestone looks like this:
 
 1. Run `primer init` to create a separate learner workspace.
 2. Run `primer doctor` to see what tools are missing before you start.
-3. Open that workspace in OpenCode, Claude Code, or Codex.
+3. Open that workspace in OpenCode, Gemini CLI, Claude Code, or Codex.
 4. Run the `primer-build` skill to load the current milestone contract and start implementing.
 5. Run the `primer-check` skill when you think the milestone is done.
 6. Run the `primer-next-milestone` skill only after the check passes.
@@ -261,7 +277,7 @@ The CLI is the source of truth for deterministic workflow actions:
 - `primer-explain`
 - `primer-next-milestone`
 
-Generated OpenCode, Claude, and Codex skills call into the CLI for those actions. `primer-build` stays agent-native, but uses `primer build` to load the current milestone contract first.
+Generated OpenCode, Gemini, Claude, and Codex skills call into the CLI for those actions. `primer-build` stays agent-native, but uses `primer build` to load the current milestone contract first.
 
 ## Available Recipe
 

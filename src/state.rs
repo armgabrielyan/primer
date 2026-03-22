@@ -34,7 +34,7 @@ struct StateDoc {
 pub fn load_from_workspace(dir: &Path) -> Result<PrimerState> {
     let dir = absolute_path(dir)?;
 
-    for filename in ["CLAUDE.md", "AGENTS.md"] {
+    for filename in ["CLAUDE.md", "AGENTS.md", "GEMINI.md"] {
         let path = dir.join(filename);
         if !path.is_file() {
             continue;
@@ -68,7 +68,7 @@ pub fn load_from_workspace(dir: &Path) -> Result<PrimerState> {
     }
 
     bail!(
-        "no Primer workspace state found in {}; expected CLAUDE.md or AGENTS.md",
+        "no Primer workspace state found in {}; expected CLAUDE.md, AGENTS.md, or GEMINI.md",
         dir.display()
     )
 }
@@ -126,4 +126,51 @@ fn absolute_path(path: &Path) -> Result<PathBuf> {
 
     let current_dir = std::env::current_dir().context("failed to read current directory")?;
     Ok(current_dir.join(path))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::load_from_workspace;
+    use std::fs;
+    use std::path::PathBuf;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    fn temp_dir(label: &str) -> PathBuf {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("time should be monotonic enough for tests")
+            .as_nanos();
+        let dir =
+            std::env::temp_dir().join(format!("primer-{label}-{}-{unique}", std::process::id()));
+        fs::create_dir_all(&dir).expect("failed to create temp dir");
+        dir
+    }
+
+    #[test]
+    fn load_from_workspace_supports_gemini_context() {
+        let workspace = temp_dir("state-gemini");
+        let recipe_path = workspace.join(".primer/recipes/demo");
+        fs::create_dir_all(&recipe_path).expect("failed to create recipe path");
+        let recipe_path =
+            fs::canonicalize(&recipe_path).expect("failed to canonicalize recipe path");
+        let workspace_root =
+            fs::canonicalize(&workspace).expect("failed to canonicalize workspace root");
+
+        fs::write(
+            workspace.join("GEMINI.md"),
+            format!(
+                "# Primer\n\n```yaml\nprimer_state:\n  recipe_id: demo\n  recipe_path: {}\n  workspace_root: {}\n  milestone_id: 01-alpha\n  verified_milestone_id: null\n  track: learner\n  stack_id: test-stack\n```\n",
+                recipe_path.display(),
+                workspace_root.display()
+            ),
+        )
+        .expect("failed to write GEMINI.md");
+
+        let state = load_from_workspace(&workspace).expect("failed to load state");
+        let context_path =
+            fs::canonicalize(workspace.join("GEMINI.md")).expect("failed to canonicalize context");
+        assert_eq!(state.context_path, context_path);
+        assert_eq!(state.recipe_id, "demo");
+        assert_eq!(state.milestone_id, "01-alpha");
+    }
 }
