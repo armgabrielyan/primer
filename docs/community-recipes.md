@@ -61,7 +61,7 @@ Keep the design simple:
 
 - one recipe should represent one learning path
 - one milestone should unlock one meaningful concept or capability
-- avoid speculative breadth in v0.1 style recipes
+- avoid speculative breadth in early-stage recipes
 - prefer deterministic checks over clever checks
 
 ## Suggested Contribution Flow

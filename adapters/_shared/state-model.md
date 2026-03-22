@@ -1,4 +1,4 @@
-# Primer State Model (v0.1)
+# Primer State Model
 
 All adapters must embed a machine-readable state block in their context file.
 
@@ -22,8 +22,8 @@ primer_state:
 - `workspace_root`: required absolute path to the learner project workspace
 - `milestone_id`: required, mutable via `next-milestone` only
 - `verified_milestone_id`: optional, set by `check` when current milestone passes
-- `track`: required, immutable for v0.1 command flow
-- `stack_id`: required, immutable for v0.1 command flow
+- `track`: required, immutable for the current command flow
+- `stack_id`: required, immutable for the current command flow
 
 ## Read Rules
 

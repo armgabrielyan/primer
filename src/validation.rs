@@ -121,7 +121,7 @@ pub fn validate_recipe_yaml(recipe_target: &Path) -> Vec<String> {
         errors.push(error(
             &recipe_yaml,
             "stacks",
-            "is not supported in v0.1; use singular 'stack'",
+            "is not supported; use singular 'stack'",
         ));
     }
 

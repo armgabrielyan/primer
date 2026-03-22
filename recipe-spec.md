@@ -1,6 +1,6 @@
-# Recipe Specification (v0.1)
+# Recipe Specification
 
-This document is the canonical contract for recipe structure in `primer` v0.1.
+This document is the canonical contract for recipe structure in `primer`.
 
 ## Recipe Location
 
@@ -48,7 +48,7 @@ Required keys:
 - `label` (string)
 - `tools` (non-empty string array)
 
-v0.1 supports only singular `stack`. `stacks` is out of scope.
+Primer currently supports only singular `stack`. `stacks` is out of scope.
 
 ### `tracks`
 
@@ -78,7 +78,7 @@ Constraints:
 - Milestone ID: `^[0-9]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$`
 - Milestone folder name must exactly match milestone ID.
 
-## Execution Model (v0.1)
+## Execution Model
 
 Milestones are cumulative in one working tree. Milestone directories define the contract and verification; implementation code evolves through all milestones in the same workspace.
 
