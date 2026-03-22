@@ -13,8 +13,9 @@ Primer is a good fit if you want to:
 - verify progress before moving on
 - learn the system as you build it
 
-Current first-class recipe:
+Current recipes:
 
+- `cli-tool`: build a practical task tracker CLI in Python
 - `operating-system`: build an x86 operating system from bootloader to shell
 
 ## Table of Contents
@@ -122,12 +123,12 @@ That distinction matters:
 If you are a beginner or novice, the recommended path is:
 
 - use `--track learner`
-- start at the default first milestone
+- start with the `cli-tool` recipe
 - run `primer doctor` early so tooling issues are obvious
 - use `primer explain` and `primer check` as part of every milestone
 - expect to learn incrementally instead of understanding the entire system up front
 
-If you are completely new to programming, Primer can still be useful as a guided environment, but the current recipe will likely feel ambitious. The workflow is accessible today; the recipe catalog still needs more beginner-depth content over time.
+If you are completely new to programming, `cli-tool` is the best place to start. The more ambitious `operating-system` recipe is better treated as an advanced guided lab.
 
 ## Who It's For
 
@@ -265,6 +266,7 @@ Current catalog:
 
 | Recipe ID | Project | Difficulty | Best starting advice |
 |---|---|---|---|
+| `cli-tool` | Build a Task Tracker CLI | `beginner` | Start here if you are new to Primer, new to AI-assisted building, or want a fast first success |
 | `operating-system` | Build Your Own Operating System | `advanced` | Start with `--track learner` and treat it like a guided lab, not a quick tutorial |
 
 For more detail on the current recipe, see [recipes/operating-system/README.md](recipes/operating-system/README.md).

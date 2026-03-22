@@ -1,0 +1,42 @@
+id: cli-tool
+title: Build a Task Tracker CLI
+description: >
+  Build a practical command-line task tracker in Python with persistent
+  storage, workflow commands, and tests.
+difficulty: beginner
+stack:
+  id: python-cli
+  label: Python CLI
+  tools:
+    - python3
+    - bash
+tracks:
+  learner:
+    description: Agent explains CLI design and implementation choices while building.
+  builder:
+    description: Agent implements the CLI directly with minimal commentary.
+milestones:
+  - id: 01-bootstrap
+    title: Bootstrap
+    demo: Add a task and list it back from a JSON file.
+    prerequisites:
+      - python3
+      - bash
+  - id: 02-complete
+    title: Complete Tasks
+    demo: Mark tasks done and show done versus pending state.
+    prerequisites:
+      - python3
+      - bash
+  - id: 03-edit-remove
+    title: Edit and Remove
+    demo: Update task titles and remove tasks by id.
+    prerequisites:
+      - python3
+      - bash
+  - id: 04-filters-tests
+    title: Filters and Tests
+    demo: Filter by task status, print a summary, and pass unit tests.
+    prerequisites:
+      - python3
+      - bash
