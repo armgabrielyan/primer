@@ -66,7 +66,7 @@ Use the terminal for setup:
 Then open the generated workspace in your AI coding agent and use the Primer workflow actions there:
 
 - `primer-build`: implement only the current milestone scope
-- `primer-check`: run milestone verification and mark it verified on success
+- `primer-verify`: run milestone verification and mark it verified on success
 - `primer-next-milestone`: unlock the next milestone only after verification passes
 - `primer-explain`: show the deeper explanation for the current milestone
 - `primer-status`: show current milestone, verification state, and progress
@@ -126,7 +126,7 @@ If you are a beginner or novice, the recommended path is:
 - use `--track learner`
 - start with the `cli-tool` recipe
 - run `primer doctor` early so tooling issues are obvious
-- use `primer explain` and `primer check` as part of every milestone
+- use `primer explain` and `primer verify` as part of every milestone
 - expect to learn incrementally instead of understanding the entire system up front
 
 If you are completely new to programming, `cli-tool` is the best place to start. The more ambitious `operating-system` recipe is better treated as an advanced guided lab.
@@ -303,10 +303,10 @@ Once the workspace is initialized, this is the primary way to use Primer:
 | `primer-build` | Load the current milestone scope and implement only that step | when you are actively building |
 | `primer-status` | Show current milestone, verification state, and progress | anytime you want orientation |
 | `primer-explain` | Show the deeper explanation for the current milestone | when you want more context or teaching |
-| `primer-check` | Run milestone verification and mark it verified on success | when you think the milestone is done |
+| `primer-verify` | Run milestone verification and mark it verified on success | when you think the milestone is done |
 | `primer-next-milestone` | Unlock the next milestone only after verification passes | when you are ready to advance |
 
-Primer also exposes matching CLI commands such as `primer build`, `primer status`, `primer explain`, `primer check`, and `primer next-milestone`, but the default experience is to use the generated actions inside your AI coding agent.
+Primer also exposes matching CLI commands such as `primer build`, `primer status`, `primer explain`, `primer verify`, and `primer next-milestone`, but the default experience is to use the generated actions inside your AI coding agent.
 
 ## CLI Setup Commands
 

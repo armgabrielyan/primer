@@ -54,7 +54,7 @@ Then open that generated workspace in your AI tool and use:
 
 - `primer-build`
 - `primer-status`
-- `primer-check`
+- `primer-verify`
 - `primer-explain`
 - `primer-next-milestone`
 
@@ -62,7 +62,7 @@ Recommended rhythm:
 
 1. Read the current milestone explanation and spec.
 2. Run `primer-build` and implement only that milestone.
-3. Run `primer-check` until it passes.
+3. Run `primer-verify` until it passes.
 4. Run `primer-next-milestone` only after the milestone is verified.
 
 ## Milestones

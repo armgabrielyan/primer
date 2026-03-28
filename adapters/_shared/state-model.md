@@ -21,7 +21,7 @@ primer_state:
 - `recipe_path`: required absolute path to the recipe in the `primer` repo
 - `workspace_root`: required absolute path to the learner project workspace
 - `milestone_id`: required, mutable via `next-milestone` only
-- `verified_milestone_id`: optional, set by `check` when current milestone passes
+- `verified_milestone_id`: optional, set by `verify` when current milestone passes
 - `track`: required, immutable for the current command flow
 - `stack_id`: required, immutable for the current command flow
 
@@ -35,11 +35,11 @@ primer_state:
 
 ## Write Rules
 
-- `check` may set `verified_milestone_id` to the current milestone when verification passes.
+- `verify` may set `verified_milestone_id` to the current milestone when verification passes.
 - `next-milestone` may update `milestone_id` and clear `verified_milestone_id`.
 - `build`, `explain`, and `status` must not mutate state.
 - If current milestone is final, `next-milestone` must not mutate state.
 
 ## Determinism
 
-Given the same state, recipe, and command outcome (`check.sh`/`demo.sh` success), state transitions must be deterministic.
+Given the same state, recipe, and command outcome (milestone verification success), state transitions must be deterministic.

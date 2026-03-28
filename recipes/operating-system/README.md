@@ -62,7 +62,7 @@ That generates both:
 
 - `AGENTS.md`
 - `.agents/skills/primer-build/SKILL.md`
-- `.agents/skills/primer-check/SKILL.md`
+- `.agents/skills/primer-verify/SKILL.md`
 - `.agents/skills/primer-explain/SKILL.md`
 - `.agents/skills/primer-status/SKILL.md`
 - `.agents/skills/primer-next-milestone/SKILL.md`
@@ -71,7 +71,7 @@ Then in your AI tool, run milestone commands/skills:
 
 - `primer-build`
 - `primer-status`
-- `primer-check`
+- `primer-verify`
 - `primer-explain`
 - `primer-next-milestone`
 
@@ -79,7 +79,7 @@ Recommended rhythm:
 
 1. Read the current milestone explanation and spec.
 2. Run `primer-build` and implement only that milestone.
-3. Run `primer-check` until it passes.
+3. Run `primer-verify` until it passes.
 4. Run `primer-next-milestone` only after the milestone is verified.
 
 ## Milestones

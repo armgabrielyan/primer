@@ -8,7 +8,7 @@ use crate::recipe::Recipe;
 
 const PRIMER_WORKFLOW_FILES: &[&str] = &[
     "build.md",
-    "check.md",
+    "verify.md",
     "explain.md",
     "status.md",
     "next-milestone.md",
@@ -72,7 +72,7 @@ fn generate_codex(
         fs::create_dir_all(&agents_dir)?;
 
         let body = match command_name {
-            "check" | "explain" | "status" | "next-milestone" => {
+            "verify" | "explain" | "status" | "next-milestone" => {
                 render_cli_backed_skill_body(command_name, shared_body)
             }
             "build" => render_build_skill_body(shared_body),
@@ -131,7 +131,7 @@ fn generate_claude(
         let command_name = filename.trim_end_matches(".md");
         let target_name = format!("primer-{command_name}.md");
         let contents = match command_name {
-            "check" | "explain" | "status" | "next-milestone" => {
+            "verify" | "explain" | "status" | "next-milestone" => {
                 render_cli_backed_claude_command(command_name, shared_body)
             }
             "build" => render_build_claude_command(shared_body),
@@ -167,7 +167,7 @@ fn generate_opencode(
         fs::create_dir_all(&skill_dir)?;
 
         let body = match command_name {
-            "check" | "explain" | "status" | "next-milestone" => {
+            "verify" | "explain" | "status" | "next-milestone" => {
                 render_cli_backed_skill_body(command_name, shared_body)
             }
             "build" => render_build_skill_body(shared_body),
@@ -214,7 +214,7 @@ fn generate_cursor(
         fs::create_dir_all(&skill_dir)?;
 
         let body = match command_name {
-            "check" | "explain" | "status" | "next-milestone" => {
+            "verify" | "explain" | "status" | "next-milestone" => {
                 render_cli_backed_skill_body(command_name, shared_body)
             }
             "build" => render_build_skill_body(shared_body),
@@ -261,7 +261,7 @@ fn generate_gemini(
         fs::create_dir_all(&skill_dir)?;
 
         let body = match command_name {
-            "check" | "explain" | "status" | "next-milestone" => {
+            "verify" | "explain" | "status" | "next-milestone" => {
                 render_cli_backed_skill_body(command_name, shared_body)
             }
             "build" => render_build_skill_body(shared_body),
@@ -292,7 +292,7 @@ fn render_adapter_context(
     milestone_id: &str,
 ) -> String {
     format!(
-        "# Primer — {}\n\n```yaml\nprimer_state:\n  recipe_id: {}\n  recipe_path: {}\n  workspace_root: {}\n  milestone_id: {}\n  verified_milestone_id: null\n  track: {}\n  stack_id: {}\n```\n\n## Recipe location\n\n{}/\n\n## Workspace root\n\n{}/\n\n## Rules\n\n- Always read the current milestone `agent.md` before starting work.\n- Work in this project workspace, not in the `primer` repository.\n- Build the current milestone in small steps and do not implement future milestones early.\n- Run current milestone `tests/check.sh` before declaring completion.\n- Only run `primer-next-milestone` after `primer-check` has marked the current milestone as verified.\n- Use the local `primer` CLI as the source of truth for `primer-check`, `primer-status`, `primer-explain`, and `primer-next-milestone`.\n- Use the generated Primer workflow actions for behavior rules.\n\n## Track Invariants\n\n{}\n\n## Available workflow actions\n\n- `primer-build` — implement the current milestone step by step\n- `primer-next-milestone` — advance state only after the milestone is already verified\n- `primer-check` — run current milestone checks\n- `primer-explain` — show current milestone explanation\n- `primer-status` — show current state and progress\n",
+        "# Primer — {}\n\n```yaml\nprimer_state:\n  recipe_id: {}\n  recipe_path: {}\n  workspace_root: {}\n  milestone_id: {}\n  verified_milestone_id: null\n  track: {}\n  stack_id: {}\n```\n\n## Recipe location\n\n{}/\n\n## Workspace root\n\n{}/\n\n## Rules\n\n- Always read the current milestone `agent.md` before starting work.\n- Work in this project workspace, not in the `primer` repository.\n- Build the current milestone in small steps and do not implement future milestones early.\n- Run current milestone verification before declaring completion.\n- Only run `primer-next-milestone` after `primer-verify` has marked the current milestone as verified.\n- Use the local `primer` CLI as the source of truth for `primer-verify`, `primer-status`, `primer-explain`, and `primer-next-milestone`.\n- Use the generated Primer workflow actions for behavior rules.\n\n## Track Invariants\n\n{}\n\n## Available workflow actions\n\n- `primer-build` — implement the current milestone step by step\n- `primer-next-milestone` — advance state only after the milestone is already verified\n- `primer-verify` — run current milestone verification\n- `primer-explain` — show current milestone explanation\n- `primer-status` — show current state and progress\n",
         recipe.title,
         recipe.id,
         recipe_path.display(),
@@ -330,7 +330,7 @@ fn render_cli_backed_skill_body(command_name: &str, shared_body: &str) -> String
 
 fn render_build_skill_body(shared_body: &str) -> String {
     format!(
-        "Use the local Primer CLI to load the current milestone spec and track guidance before making changes.\n\n## Active track rules\n\n- Respect the current `track` from `primer_state`.\n- In learner track, use a teacher-student style: explain before coding, move in small steps, ask at least one question before major implementation, and check understanding before advancing.\n- In builder track, implement directly, keep commentary minimal, and focus on the smallest milestone-completing change.\n\n## Required action\n\n1. Run `primer build` from the current workspace root.\n2. Use that output as the current milestone contract and active track guidance.\n3. Then implement only the current milestone scope in the workspace.\n4. Recommend running `primer-check` when the milestone is complete.\n\n## Shared contract reference\n\n{shared_body}\n"
+        "Use the local Primer CLI to load the current milestone spec and track guidance before making changes.\n\n## Active track rules\n\n- Respect the current `track` from `primer_state`.\n- In learner track, use a teacher-student style: explain before coding, move in small steps, ask at least one question before major implementation, and check understanding before advancing.\n- In builder track, implement directly, keep commentary minimal, and focus on the smallest milestone-completing change.\n\n## Required action\n\n1. Run `primer build` from the current workspace root.\n2. Use that output as the current milestone contract and active track guidance.\n3. Then implement only the current milestone scope in the workspace.\n4. Recommend running `primer-verify` when the milestone is complete.\n\n## Shared contract reference\n\n{shared_body}\n"
     )
 }
 
@@ -342,7 +342,7 @@ fn render_cli_backed_claude_command(command_name: &str, shared_body: &str) -> St
 
 fn render_build_claude_command(shared_body: &str) -> String {
     format!(
-        "# Primer Skill: `primer-build`\n\nUse the local Primer CLI to load the current milestone spec and track guidance before making changes.\n\n## Active track rules\n\n- Respect the current `track` from `primer_state`.\n- In learner track, use a teacher-student style: explain before coding, move in small steps, ask at least one question before major implementation, and check understanding before advancing.\n- In builder track, implement directly, keep commentary minimal, and focus on the smallest milestone-completing change.\n\n## Required action\n\n1. Run `primer build` from the current workspace root.\n2. Use that output as the current milestone contract and active track guidance.\n3. Then implement only the current milestone scope in the workspace.\n4. Recommend running `primer-check` when the milestone is complete.\n\n## Shared contract reference\n\n{shared_body}\n"
+        "# Primer Skill: `primer-build`\n\nUse the local Primer CLI to load the current milestone spec and track guidance before making changes.\n\n## Active track rules\n\n- Respect the current `track` from `primer_state`.\n- In learner track, use a teacher-student style: explain before coding, move in small steps, ask at least one question before major implementation, and check understanding before advancing.\n- In builder track, implement directly, keep commentary minimal, and focus on the smallest milestone-completing change.\n\n## Required action\n\n1. Run `primer build` from the current workspace root.\n2. Use that output as the current milestone contract and active track guidance.\n3. Then implement only the current milestone scope in the workspace.\n4. Recommend running `primer-verify` when the milestone is complete.\n\n## Shared contract reference\n\n{shared_body}\n"
     )
 }
 
@@ -418,7 +418,7 @@ mod tests {
 
         assert!(out.join("AGENTS.md").exists());
         assert!(out.join(".agents/skills/primer-build/SKILL.md").exists());
-        assert!(out.join(".agents/skills/primer-check/SKILL.md").exists());
+        assert!(out.join(".agents/skills/primer-verify/SKILL.md").exists());
 
         let context = read(&out.join("AGENTS.md"));
         assert!(context.contains("recipe_id: operating-system"));
@@ -476,7 +476,7 @@ mod tests {
 
         assert!(out.join("AGENTS.md").exists());
         assert!(out.join(".opencode/skills/primer-build/SKILL.md").exists());
-        assert!(out.join(".opencode/skills/primer-check/SKILL.md").exists());
+        assert!(out.join(".opencode/skills/primer-verify/SKILL.md").exists());
 
         let context = read(&out.join("AGENTS.md"));
         assert!(context.contains("recipe_id: operating-system"));
@@ -507,7 +507,7 @@ mod tests {
 
         assert!(out.join("GEMINI.md").exists());
         assert!(out.join(".gemini/skills/primer-build/SKILL.md").exists());
-        assert!(out.join(".gemini/skills/primer-check/SKILL.md").exists());
+        assert!(out.join(".gemini/skills/primer-verify/SKILL.md").exists());
 
         let context = read(&out.join("GEMINI.md"));
         assert!(context.contains("recipe_id: operating-system"));
@@ -538,7 +538,7 @@ mod tests {
 
         assert!(out.join("AGENTS.md").exists());
         assert!(out.join(".cursor/skills/primer-build/SKILL.md").exists());
-        assert!(out.join(".cursor/skills/primer-check/SKILL.md").exists());
+        assert!(out.join(".cursor/skills/primer-verify/SKILL.md").exists());
 
         let context = read(&out.join("AGENTS.md"));
         assert!(context.contains("recipe_id: operating-system"));

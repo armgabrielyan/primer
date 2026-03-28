@@ -209,8 +209,24 @@ fn read_context(workspace_root: &Path) -> String {
 }
 
 #[test]
-fn check_updates_verified_milestone_on_success() {
-    let (_primer_root, workspace_root) = setup_fixture("check-success", None);
+fn verify_updates_verified_milestone_on_success() {
+    let (_primer_root, workspace_root) = setup_fixture("verify-success", None);
+    write_file(&workspace_root.join("milestone.ok"), "ok\n");
+
+    let output = run_primer(&workspace_root, &["verify"]);
+
+    assert!(
+        output.status.success(),
+        "stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let context = read_context(&workspace_root);
+    assert!(context.contains("verified_milestone_id: 01-alpha"));
+}
+
+#[test]
+fn check_alias_still_verifies() {
+    let (_primer_root, workspace_root) = setup_fixture("verify-alias", None);
     write_file(&workspace_root.join("milestone.ok"), "ok\n");
 
     let output = run_primer(&workspace_root, &["check"]);
@@ -225,15 +241,29 @@ fn check_updates_verified_milestone_on_success() {
 }
 
 #[test]
-fn check_failure_keeps_state_unchanged() {
-    let (_primer_root, workspace_root) = setup_fixture("check-failure", None);
+fn verify_failure_keeps_unverified_state_unchanged() {
+    let (_primer_root, workspace_root) = setup_fixture("verify-failure", None);
 
-    let output = run_primer(&workspace_root, &["check"]);
+    let output = run_primer(&workspace_root, &["verify"]);
 
     assert!(!output.status.success());
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(stderr.contains("milestone.ok is missing"));
-    assert!(stderr.contains("state was not updated"));
+    assert!(stderr.contains("verification failed"));
+    let context = read_context(&workspace_root);
+    assert!(context.contains("verified_milestone_id: null"));
+}
+
+#[test]
+fn verify_failure_clears_prior_verified_state() {
+    let (_primer_root, workspace_root) = setup_fixture("verify-failure-clears", Some("01-alpha"));
+
+    let output = run_primer(&workspace_root, &["verify"]);
+
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("milestone.ok is missing"));
+    assert!(stderr.contains("current verified state was cleared"));
     let context = read_context(&workspace_root);
     assert!(context.contains("verified_milestone_id: null"));
 }
@@ -246,7 +276,7 @@ fn next_milestone_requires_prior_verification() {
 
     assert!(!output.status.success());
     let stderr = String::from_utf8_lossy(&output.stderr);
-    assert!(stderr.contains("run the skill primer-check first"));
+    assert!(stderr.contains("run the skill primer-verify first"));
     let context = read_context(&workspace_root);
     assert!(context.contains("milestone_id: 01-alpha"));
     assert!(context.contains("verified_milestone_id: null"));
@@ -282,7 +312,7 @@ fn build_shows_current_spec_and_track_guidance() {
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(stdout.contains("Milestone 01: Alpha"));
     assert!(stdout.contains("Explain the alpha task before coding."));
-    assert!(stdout.contains("Run the skill primer-check when the milestone is complete"));
+    assert!(stdout.contains("Run the skill primer-verify when the milestone is complete"));
 }
 
 #[test]

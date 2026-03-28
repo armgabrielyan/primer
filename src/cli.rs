@@ -35,7 +35,8 @@ pub enum Commands {
     Status,
 
     /// Run verification for the current milestone
-    Check,
+    #[command(name = "verify", visible_alias = "check")]
+    Verify,
 
     /// Advance to the next milestone after verification
     #[command(name = "next-milestone")]

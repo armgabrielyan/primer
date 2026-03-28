@@ -12,7 +12,7 @@ Advance to the next milestone only after the current milestone has already been 
 
 1. Read and validate `primer_state`.
 2. Resolve current milestone from `recipe.yaml`.
-3. If `verified_milestone_id` is not equal to the current milestone id, stop and instruct the user to run `primer-check`.
+3. If `verified_milestone_id` is not equal to the current milestone id, stop and instruct the user to run `primer-verify`.
 4. If current milestone is final, return completion summary; do not update state.
 5. Otherwise set `primer_state.milestone_id` to the next declared milestone and clear `verified_milestone_id`.
 6. Load next milestone `spec.md` and `agent.md`.

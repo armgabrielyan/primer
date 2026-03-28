@@ -97,7 +97,7 @@ pub fn run(workspace_hint: &Path) -> Result<()> {
             ),
             format!(
                 "Run the {} when the milestone is complete",
-                ui::reference("skill", "primer-check")
+                ui::reference("skill", "primer-verify")
             ),
         ]);
     }

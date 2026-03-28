@@ -15,7 +15,7 @@ pub fn run(workspace_hint: &Path) -> Result<()> {
         bail!(
             "milestone {} is not verified yet; run the {} first",
             current.id,
-            ui::reference("skill", "primer-check")
+            ui::reference("skill", "primer-verify")
         );
     }
 
