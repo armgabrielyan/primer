@@ -18,7 +18,7 @@ use anyhow::Result;
 use clap::{CommandFactory, Parser};
 use clap_complete::generate;
 
-use crate::cli::{Cli, Commands, WorkstreamCommands};
+use crate::cli::{Cli, Commands, RecipeCommands, WorkstreamCommands};
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
@@ -33,6 +33,11 @@ fn main() -> Result<()> {
             let workspace_hint = std::env::current_dir()?;
             match command {
                 Commands::List => commands::list::run(&source),
+                Commands::Recipe(args) => match args.command {
+                    RecipeCommands::Lint(args) => {
+                        commands::recipe::lint(&source, &workspace_hint, args)
+                    }
+                },
                 Commands::Init(args) => commands::init::run(&source, args),
                 Commands::Doctor(args) => commands::doctor::run(&source, args),
                 Commands::Workstream(args) => match args.command {

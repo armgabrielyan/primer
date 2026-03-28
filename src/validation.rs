@@ -1,10 +1,136 @@
 use anyhow::{Result, bail};
+use serde::Serialize;
 use serde_yaml::{Mapping, Value};
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use crate::recipe;
+
 const DIFFICULTY_VALUES: &[&str] = &["beginner", "intermediate", "advanced"];
 const REQUIRED_MILESTONE_FILES: &[&str] = &["spec.md", "agent.md", "explanation.md", "demo.sh"];
+const RECOMMENDED_MAX_EXPECTED_ARTIFACTS: usize = 3;
+const RECOMMENDED_MAX_VERIFY_MINUTES: u32 = 5;
+const MIN_RECOMMENDED_GOAL_LENGTH: usize = 32;
+const MIN_RECOMMENDED_VERIFICATION_SUMMARY_LENGTH: usize = 48;
+const VAGUE_GOAL_TERMS: &[&str] = &[
+    "improve", "refine", "cleanup", "clean up", "polish", "continue", "misc", "stuff", "things",
+    "various",
+];
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum LintSeverity {
+    Error,
+    Warning,
+    Advice,
+}
+
+impl LintSeverity {
+    pub fn label(self) -> &'static str {
+        match self {
+            LintSeverity::Error => "error",
+            LintSeverity::Warning => "warning",
+            LintSeverity::Advice => "advice",
+        }
+    }
+
+    pub fn blocks(self) -> bool {
+        matches!(self, LintSeverity::Error | LintSeverity::Warning)
+    }
+
+    fn sort_key(self) -> u8 {
+        match self {
+            LintSeverity::Error => 0,
+            LintSeverity::Warning => 1,
+            LintSeverity::Advice => 2,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct LintFinding {
+    pub severity: LintSeverity,
+    pub code: String,
+    pub milestone_id: Option<String>,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct RecipeLintReport {
+    pub recipe_id: Option<String>,
+    pub path: PathBuf,
+    pub milestone_count: usize,
+    pub findings: Vec<LintFinding>,
+}
+
+impl RecipeLintReport {
+    pub fn is_clean(&self) -> bool {
+        self.findings.is_empty()
+    }
+
+    pub fn count_by_severity(&self, severity: LintSeverity) -> usize {
+        self.findings
+            .iter()
+            .filter(|finding| finding.severity == severity)
+            .count()
+    }
+
+    pub fn has_blocking_findings(&self) -> bool {
+        self.findings
+            .iter()
+            .any(|finding| finding.severity.blocks())
+    }
+}
+
+pub fn lint_recipe(recipe_target: &Path) -> RecipeLintReport {
+    let path = recipe_dir_path(recipe_target);
+    let mut findings = validate_recipe_yaml(recipe_target)
+        .into_iter()
+        .map(|message| LintFinding {
+            severity: LintSeverity::Error,
+            code: "schema".to_string(),
+            milestone_id: None,
+            message,
+        })
+        .collect::<Vec<_>>();
+    findings.extend(
+        validate_milestones(recipe_target)
+            .into_iter()
+            .map(|message| LintFinding {
+                severity: LintSeverity::Error,
+                code: "milestone-contract".to_string(),
+                milestone_id: None,
+                message,
+            }),
+    );
+
+    let recipe = recipe::load_from_path(&path).ok();
+    let recipe_id = recipe.as_ref().map(|recipe| recipe.id.clone());
+    let milestone_count = recipe
+        .as_ref()
+        .map(|recipe| recipe.milestones.len())
+        .unwrap_or_default();
+
+    if let Some(recipe) = recipe {
+        findings.extend(lint_milestone_quality(&recipe));
+    }
+
+    findings.sort_by(|left, right| {
+        left.severity
+            .sort_key()
+            .cmp(&right.severity.sort_key())
+            .then_with(|| left.milestone_id.cmp(&right.milestone_id))
+            .then_with(|| left.code.cmp(&right.code))
+            .then_with(|| left.message.cmp(&right.message))
+    });
+
+    RecipeLintReport {
+        recipe_id,
+        path,
+        milestone_count,
+        findings,
+    }
+}
 
 pub fn validate_recipe(recipe_target: &Path) -> Result<()> {
     let recipe_yaml = recipe_yaml_path(recipe_target);
@@ -447,6 +573,166 @@ pub fn validate_milestones(recipe_target: &Path) -> Vec<String> {
     errors
 }
 
+fn lint_milestone_quality(recipe: &recipe::Recipe) -> Vec<LintFinding> {
+    let mut findings = Vec::new();
+
+    for (index, milestone) in recipe.milestones.iter().enumerate() {
+        let scope = format!("milestones[{index}]");
+
+        match milestone.goal.as_deref().map(str::trim) {
+            Some(goal) if !goal.is_empty() => {
+                if goal.len() < MIN_RECOMMENDED_GOAL_LENGTH {
+                    findings.push(LintFinding {
+                        severity: LintSeverity::Warning,
+                        code: "goal-too-short".to_string(),
+                        milestone_id: Some(milestone.id.clone()),
+                        message: format!(
+                            "{}.goal is short; describe the capability change and boundary more explicitly",
+                            scope
+                        ),
+                    });
+                }
+                if goal_looks_vague(goal) {
+                    findings.push(LintFinding {
+                        severity: LintSeverity::Warning,
+                        code: "goal-vague".to_string(),
+                        milestone_id: Some(milestone.id.clone()),
+                        message: format!(
+                            "{}.goal looks vague; prefer an observable capability change over generic improvement language",
+                            scope
+                        ),
+                    });
+                }
+            }
+            _ => findings.push(LintFinding {
+                severity: LintSeverity::Warning,
+                code: "goal-missing".to_string(),
+                milestone_id: Some(milestone.id.clone()),
+                message: format!(
+                    "{}.goal is missing; add a clear milestone goal before asking an agent to build it",
+                    scope
+                ),
+            }),
+        }
+
+        match milestone.verification_summary.as_deref().map(str::trim) {
+            Some(summary) if !summary.is_empty() => {
+                if summary.len() < MIN_RECOMMENDED_VERIFICATION_SUMMARY_LENGTH {
+                    findings.push(LintFinding {
+                        severity: LintSeverity::Warning,
+                        code: "verification-summary-weak".to_string(),
+                        milestone_id: Some(milestone.id.clone()),
+                        message: format!(
+                            "{}.verification_summary is brief; describe the observable pass condition more concretely",
+                            scope
+                        ),
+                    });
+                }
+                if verification_summary_looks_vague(summary) {
+                    findings.push(LintFinding {
+                        severity: LintSeverity::Warning,
+                        code: "verification-summary-vague".to_string(),
+                        milestone_id: Some(milestone.id.clone()),
+                        message: format!(
+                            "{}.verification_summary should describe a concrete pass signal such as output, files, or behavior",
+                            scope
+                        ),
+                    });
+                }
+            }
+            _ => findings.push(LintFinding {
+                severity: LintSeverity::Warning,
+                code: "verification-summary-missing".to_string(),
+                milestone_id: Some(milestone.id.clone()),
+                message: format!(
+                    "{}.verification_summary is missing; add the verification gate Primer should trust",
+                    scope
+                ),
+            }),
+        }
+
+        if milestone.expected_artifacts.len() > RECOMMENDED_MAX_EXPECTED_ARTIFACTS {
+            findings.push(LintFinding {
+                severity: LintSeverity::Advice,
+                code: "expected-artifacts-many".to_string(),
+                milestone_id: Some(milestone.id.clone()),
+                message: format!(
+                    "{}.expected_artifacts lists {} items; consider narrowing the milestone boundary",
+                    scope,
+                    milestone.expected_artifacts.len()
+                ),
+            });
+        }
+
+        if milestone.expected_artifacts.is_empty() {
+            findings.push(LintFinding {
+                severity: LintSeverity::Advice,
+                code: "expected-artifacts-missing".to_string(),
+                milestone_id: Some(milestone.id.clone()),
+                message: format!(
+                    "{}.expected_artifacts is empty; listing likely outputs makes milestone boundaries easier to inspect",
+                    scope
+                ),
+            });
+        }
+
+        if milestone
+            .split_if_stuck
+            .as_deref()
+            .map(str::trim)
+            .is_none_or(str::is_empty)
+        {
+            findings.push(LintFinding {
+                severity: LintSeverity::Warning,
+                code: "split-if-stuck-missing".to_string(),
+                milestone_id: Some(milestone.id.clone()),
+                message: format!(
+                    "{}.split_if_stuck is missing; add a fallback that tells the agent how to reduce scope safely",
+                    scope
+                ),
+            });
+        }
+
+        match milestone.estimated_verify_minutes {
+            Some(minutes) if minutes > RECOMMENDED_MAX_VERIFY_MINUTES => {
+                findings.push(LintFinding {
+                    severity: LintSeverity::Advice,
+                    code: "verification-time-high".to_string(),
+                    milestone_id: Some(milestone.id.clone()),
+                    message: format!(
+                        "{}.estimated_verify_minutes is {}; consider splitting milestones that take longer than {} minutes to verify",
+                        scope, minutes, RECOMMENDED_MAX_VERIFY_MINUTES
+                    ),
+                });
+            }
+            Some(_) => {}
+            None => findings.push(LintFinding {
+                severity: LintSeverity::Advice,
+                code: "verification-time-missing".to_string(),
+                milestone_id: Some(milestone.id.clone()),
+                message: format!(
+                    "{}.estimated_verify_minutes is missing; add a sizing signal so authors can spot milestones that are drifting larger",
+                    scope
+                ),
+            }),
+        }
+
+        if milestone_signals_multiple_capabilities(milestone) {
+            findings.push(LintFinding {
+                severity: LintSeverity::Advice,
+                code: "multiple-capability-signals".to_string(),
+                milestone_id: Some(milestone.id.clone()),
+                message: format!(
+                    "{} appears to bundle multiple capability changes; consider splitting it into a smaller verified step",
+                    scope
+                ),
+            });
+        }
+    }
+
+    findings
+}
+
 fn validate_agent_instructions(agent_path: &Path, agent_markdown: &str, errors: &mut Vec<String>) {
     let Some(learner) = extract_track_section(agent_markdown, "## Learner Track") else {
         errors.push(error(
@@ -505,6 +791,44 @@ fn validate_agent_instructions(agent_path: &Path, agent_markdown: &str, errors: 
             "builder track must require running milestone verification",
         ));
     }
+}
+
+fn goal_looks_vague(goal: &str) -> bool {
+    let trimmed = goal.trim();
+    let lower = trimmed.to_ascii_lowercase();
+    let word_count = trimmed.split_whitespace().count();
+    word_count <= 4 || VAGUE_GOAL_TERMS.iter().any(|term| lower.contains(term))
+}
+
+fn verification_summary_looks_vague(summary: &str) -> bool {
+    let lower = summary.to_ascii_lowercase();
+    let has_pass_signal = [
+        "verify", "pass", "print", "show", "return", "exist", "appear", "run", "output", "file",
+        "exit", "accept",
+    ]
+    .iter()
+    .any(|signal| lower.contains(signal));
+    !has_pass_signal
+}
+
+fn milestone_signals_multiple_capabilities(milestone: &recipe::Milestone) -> bool {
+    let title = milestone.title.to_ascii_lowercase();
+    let goal = milestone
+        .goal
+        .as_deref()
+        .unwrap_or_default()
+        .to_ascii_lowercase();
+    let bundles_multiple_actions = title.contains(" and ")
+        || title.contains(" + ")
+        || title.contains(" / ")
+        || goal.matches(" and ").count() >= 1
+        || goal.matches(',').count() >= 2
+        || goal.contains(" plus ");
+
+    bundles_multiple_actions
+        && (milestone.expected_artifacts.len() >= RECOMMENDED_MAX_EXPECTED_ARTIFACTS
+            || milestone.estimated_verify_minutes.unwrap_or_default()
+                >= RECOMMENDED_MAX_VERIFY_MINUTES)
 }
 
 fn has_verification_script(milestone_dir: &Path) -> bool {

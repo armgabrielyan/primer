@@ -25,6 +25,9 @@ pub enum Commands {
     /// List available recipes
     List,
 
+    /// Manage recipe authoring tasks
+    Recipe(RecipeArgs),
+
     /// Initialize a Primer workspace from a recipe
     Init(InitArgs),
 
@@ -60,6 +63,32 @@ pub enum Commands {
         /// Shell to generate completions for
         shell: Shell,
     },
+}
+
+#[derive(Debug, Clone, Args)]
+pub struct RecipeArgs {
+    #[command(subcommand)]
+    pub command: RecipeCommands,
+}
+
+#[derive(Debug, Clone, Subcommand)]
+pub enum RecipeCommands {
+    /// Lint recipe structure and milestone quality
+    Lint(RecipeLintArgs),
+}
+
+#[derive(Debug, Clone, Args)]
+pub struct RecipeLintArgs {
+    /// Recipe identifier to lint when running from a repository with a local recipes/ directory
+    pub recipe_id: Option<String>,
+
+    /// Lint a specific recipe directory directly
+    #[arg(long, value_name = "DIR", conflicts_with = "recipe_id")]
+    pub path: Option<PathBuf>,
+
+    /// Print machine-readable JSON output
+    #[arg(long)]
+    pub json: bool,
 }
 
 #[derive(Debug, Clone, Args)]

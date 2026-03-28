@@ -4,6 +4,7 @@ pub mod explain;
 pub mod init;
 pub mod list;
 pub mod next_milestone;
+pub mod recipe;
 pub mod status;
 pub mod track;
 pub mod verify;
