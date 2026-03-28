@@ -19,7 +19,7 @@ Switch the active workspace track between learner and builder.
 ## State Mutation
 
 - Allowed: `primer_state.track`
-- Forbidden: changes to `recipe_id`, `recipe_path`, `workspace_root`, `milestone_id`, `verified_milestone_id`, `stack_id`
+- Forbidden: changes to `source`, `workspace_root`, `milestone_id`, `verified_milestone_id`, `stack_id`
 
 ## Failure Modes
 

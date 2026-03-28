@@ -76,6 +76,8 @@ fn init_uses_bundled_recipe_without_external_repo() {
         .join(".primer")
         .join("recipes")
         .join("operating-system");
-    assert!(context.contains("recipe_id: operating-system"));
-    assert!(context.contains(&format!("recipe_path: {}", recipe_snapshot.display())));
+    assert!(context.contains("schema_version: 2"));
+    assert!(context.contains("kind: recipe"));
+    assert!(context.contains("id: operating-system"));
+    assert!(context.contains(&format!("path: {}", recipe_snapshot.display())));
 }

@@ -9,13 +9,15 @@ mod state;
 mod ui;
 mod validation;
 mod verification_history;
+mod workflow;
 mod workspace;
+mod workstream;
 
 use anyhow::Result;
 use clap::{CommandFactory, Parser};
 use clap_complete::generate;
 
-use crate::cli::{Cli, Commands};
+use crate::cli::{Cli, Commands, WorkstreamCommands};
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
@@ -32,6 +34,11 @@ fn main() -> Result<()> {
                 Commands::List => commands::list::run(&source),
                 Commands::Init(args) => commands::init::run(&source, args),
                 Commands::Doctor(args) => commands::doctor::run(&source, args),
+                Commands::Workstream(args) => match args.command {
+                    WorkstreamCommands::Init(args) => {
+                        commands::workstream::init(&workspace_hint, args)
+                    }
+                },
                 Commands::Status => commands::status::run(&workspace_hint),
                 Commands::Track(args) => commands::track::run(&workspace_hint, args),
                 Commands::Verify => commands::verify::run(&workspace_hint),

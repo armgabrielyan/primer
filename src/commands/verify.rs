@@ -6,18 +6,18 @@ use std::time::Instant;
 #[cfg(windows)]
 use which::which;
 
-use crate::recipe;
 use crate::retry_guidance;
 use crate::state;
 use crate::ui;
 use crate::verification_history::{self, VerificationCommand, VerificationOutcome};
+use crate::workflow;
 
 pub fn run(workspace_hint: &Path) -> Result<()> {
     let mut state = state::load_from_workspace(workspace_hint)?;
-    let recipe = recipe::load_from_path(&state.recipe_path)?;
-    let milestone = recipe::resolve_initial_milestone(&recipe, Some(&state.milestone_id))?;
+    let workflow = workflow::load(&state.source)?;
+    let milestone = workflow::resolve_initial_milestone(&workflow, Some(&state.milestone_id))?;
 
-    let checks_dir = recipe
+    let checks_dir = workflow
         .path
         .join("milestones")
         .join(&milestone.id)

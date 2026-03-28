@@ -5,18 +5,18 @@ Report current progress and next action.
 ## Inputs
 
 - Context file with `primer_state`
-- Recipe path from context file
+- Workflow source path from context file
 
 ## Behavior
 
 1. Read and validate `primer_state`.
-2. Resolve milestone index from `recipe.yaml`.
+2. Resolve milestone index from the active workflow source.
 3. Return:
   - workflow state
-  - recipe id
+  - workflow source kind and id
   - workspace root
   - track
-  - stack id
+  - stack id when present
   - current milestone id and title
   - whether current milestone is already verified
   - verification attempt count

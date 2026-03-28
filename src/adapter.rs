@@ -5,6 +5,7 @@ use std::path::Path;
 use crate::bundled;
 use crate::cli::Tool;
 use crate::recipe::Recipe;
+use crate::workflow::{Workflow, WorkflowSourceKind};
 
 const PRIMER_WORKFLOW_FILES: &[&str] = &[
     "build.md",
@@ -15,6 +16,15 @@ const PRIMER_WORKFLOW_FILES: &[&str] = &[
     "next-milestone.md",
 ];
 
+struct AdapterWorkflow<'a> {
+    title: &'a str,
+    source_kind: WorkflowSourceKind,
+    source_id: &'a str,
+    source_path: &'a Path,
+    stack_id: Option<&'a str>,
+    milestones: &'a [crate::recipe::Milestone],
+}
+
 pub fn generate(
     recipe: &Recipe,
     recipe_path: &Path,
@@ -23,18 +33,65 @@ pub fn generate(
     track: &str,
     milestone_id: &str,
 ) -> Result<()> {
-    ensure_valid_initial_milestone(recipe, milestone_id)?;
+    let workflow = AdapterWorkflow {
+        title: &recipe.title,
+        source_kind: WorkflowSourceKind::Recipe,
+        source_id: &recipe.id,
+        source_path: recipe_path,
+        stack_id: Some(&recipe.stack_id),
+        milestones: &recipe.milestones,
+    };
+    generate_internal(&workflow, output_dir, tool, track, milestone_id)
+}
+
+pub fn generate_workstream(
+    workflow: &Workflow,
+    output_dir: &Path,
+    tool: Tool,
+    track: &str,
+    milestone_id: &str,
+) -> Result<()> {
+    let workflow = AdapterWorkflow {
+        title: &workflow.title,
+        source_kind: workflow.source.kind,
+        source_id: &workflow.source.id,
+        source_path: &workflow.path,
+        stack_id: workflow.stack_id.as_deref(),
+        milestones: &workflow.milestones,
+    };
+    generate_internal(&workflow, output_dir, tool, track, milestone_id)
+}
+
+pub fn context_path_for_tool(tool: Tool) -> &'static str {
     match tool {
-        Tool::Codex => generate_codex(recipe, recipe_path, output_dir, track, milestone_id),
-        Tool::Claude => generate_claude(recipe, recipe_path, output_dir, track, milestone_id),
-        Tool::Cursor => generate_cursor(recipe, recipe_path, output_dir, track, milestone_id),
-        Tool::Gemini => generate_gemini(recipe, recipe_path, output_dir, track, milestone_id),
-        Tool::Opencode => generate_opencode(recipe, recipe_path, output_dir, track, milestone_id),
+        Tool::Codex | Tool::Cursor | Tool::Opencode => "AGENTS.md",
+        Tool::Claude => "CLAUDE.md",
+        Tool::Gemini => "GEMINI.md",
     }
 }
 
-fn ensure_valid_initial_milestone(recipe: &Recipe, milestone_id: &str) -> Result<()> {
-    if recipe
+fn generate_internal(
+    workflow: &AdapterWorkflow<'_>,
+    output_dir: &Path,
+    tool: Tool,
+    track: &str,
+    milestone_id: &str,
+) -> Result<()> {
+    ensure_valid_initial_milestone(workflow, milestone_id)?;
+    match tool {
+        Tool::Codex => generate_codex(workflow, output_dir, track, milestone_id),
+        Tool::Claude => generate_claude(workflow, output_dir, track, milestone_id),
+        Tool::Cursor => generate_cursor(workflow, output_dir, track, milestone_id),
+        Tool::Gemini => generate_gemini(workflow, output_dir, track, milestone_id),
+        Tool::Opencode => generate_opencode(workflow, output_dir, track, milestone_id),
+    }
+}
+
+fn ensure_valid_initial_milestone(
+    workflow: &AdapterWorkflow<'_>,
+    milestone_id: &str,
+) -> Result<()> {
+    if workflow
         .milestones
         .iter()
         .any(|milestone| milestone.id == milestone_id)
@@ -42,15 +99,15 @@ fn ensure_valid_initial_milestone(recipe: &Recipe, milestone_id: &str) -> Result
         return Ok(());
     }
     bail!(
-        "{}: milestone_id '{}' is not declared in milestones",
-        recipe.path.join("recipe.yaml").display(),
+        "{} '{}': milestone_id '{}' is not declared in milestones",
+        workflow.source_kind.as_str(),
+        workflow.source_id,
         milestone_id
     )
 }
 
 fn generate_codex(
-    recipe: &Recipe,
-    recipe_path: &Path,
+    workflow: &AdapterWorkflow<'_>,
     output_dir: &Path,
     track: &str,
     milestone_id: &str,
@@ -61,7 +118,7 @@ fn generate_codex(
 
     fs::write(
         &agents_md,
-        render_adapter_context(recipe, recipe_path, output_dir, track, milestone_id),
+        render_adapter_context(workflow, output_dir, track, milestone_id),
     )?;
 
     for filename in PRIMER_WORKFLOW_FILES {
@@ -90,11 +147,11 @@ fn generate_codex(
             render_openai_yaml(
                 &format!(
                     "{}: {}",
-                    recipe.title,
+                    workflow.title,
                     title_case(&command_name.replace('-', " "))
                 ),
                 &format!(
-                    "{} for the current Primer recipe",
+                    "{} for the current Primer workflow",
                     capitalize(command_label(command_name))
                 ),
                 &default_prompt(command_name),
@@ -106,8 +163,7 @@ fn generate_codex(
 }
 
 fn generate_claude(
-    recipe: &Recipe,
-    recipe_path: &Path,
+    workflow: &AdapterWorkflow<'_>,
     output_dir: &Path,
     track: &str,
     milestone_id: &str,
@@ -118,7 +174,7 @@ fn generate_claude(
 
     fs::write(
         &claude_md,
-        render_adapter_context(recipe, recipe_path, output_dir, track, milestone_id),
+        render_adapter_context(workflow, output_dir, track, milestone_id),
     )?;
 
     for filename in PRIMER_WORKFLOW_FILES {
@@ -140,8 +196,7 @@ fn generate_claude(
 }
 
 fn generate_opencode(
-    recipe: &Recipe,
-    recipe_path: &Path,
+    workflow: &AdapterWorkflow<'_>,
     output_dir: &Path,
     track: &str,
     milestone_id: &str,
@@ -152,7 +207,7 @@ fn generate_opencode(
 
     fs::write(
         &agents_md,
-        render_adapter_context(recipe, recipe_path, output_dir, track, milestone_id),
+        render_adapter_context(workflow, output_dir, track, milestone_id),
     )?;
 
     for filename in PRIMER_WORKFLOW_FILES {
@@ -181,8 +236,7 @@ fn generate_opencode(
 }
 
 fn generate_cursor(
-    recipe: &Recipe,
-    recipe_path: &Path,
+    workflow: &AdapterWorkflow<'_>,
     output_dir: &Path,
     track: &str,
     milestone_id: &str,
@@ -193,7 +247,7 @@ fn generate_cursor(
 
     fs::write(
         &agents_md,
-        render_adapter_context(recipe, recipe_path, output_dir, track, milestone_id),
+        render_adapter_context(workflow, output_dir, track, milestone_id),
     )?;
 
     for filename in PRIMER_WORKFLOW_FILES {
@@ -222,8 +276,7 @@ fn generate_cursor(
 }
 
 fn generate_gemini(
-    recipe: &Recipe,
-    recipe_path: &Path,
+    workflow: &AdapterWorkflow<'_>,
     output_dir: &Path,
     track: &str,
     milestone_id: &str,
@@ -234,7 +287,7 @@ fn generate_gemini(
 
     fs::write(
         &gemini_md,
-        render_adapter_context(recipe, recipe_path, output_dir, track, milestone_id),
+        render_adapter_context(workflow, output_dir, track, milestone_id),
     )?;
 
     for filename in PRIMER_WORKFLOW_FILES {
@@ -263,22 +316,28 @@ fn generate_gemini(
 }
 
 fn render_adapter_context(
-    recipe: &Recipe,
-    recipe_path: &Path,
+    workflow: &AdapterWorkflow<'_>,
     workspace_root: &Path,
     track: &str,
     milestone_id: &str,
 ) -> String {
+    let stack_id = workflow
+        .stack_id
+        .map(|stack_id| format!("  stack_id: {stack_id}\n"))
+        .unwrap_or_default();
+    let source_label = workflow.source_kind.label();
     format!(
-        "# Primer — {}\n\n```yaml\nprimer_state:\n  recipe_id: {}\n  recipe_path: {}\n  workspace_root: {}\n  milestone_id: {}\n  verified_milestone_id: null\n  track: {}\n  stack_id: {}\n```\n\n## Recipe location\n\n{}/\n\n## Workspace root\n\n{}/\n\n## Rules\n\n- Always read the current milestone `agent.md` before starting work.\n- Work in this project workspace, not in the `primer` repository.\n- Build the current milestone in small steps and do not implement future milestones early.\n- Run current milestone verification before declaring completion.\n- Only run `primer-next-milestone` after `primer-verify` has marked the current milestone as verified.\n- Use the local `primer` CLI as the source of truth for `primer-build`, `primer-track`, `primer-verify`, `primer-status`, `primer-explain`, and `primer-next-milestone`.\n- Use the generated Primer workflow actions for behavior rules.\n\n## Track Invariants\n\n{}\n\n## Available workflow actions\n\n- `primer-build` — implement the current milestone step by step\n- `primer-track` — switch the active learner or builder track for this workspace\n- `primer-next-milestone` — advance state only after the milestone is already verified\n- `primer-verify` — run current milestone verification\n- `primer-explain` — show current milestone explanation\n- `primer-status` — show current state and progress\n",
-        recipe.title,
-        recipe.id,
-        recipe_path.display(),
+        "# Primer — {}\n\n```yaml\nprimer_state:\n  schema_version: 2\n  source:\n    kind: {}\n    id: {}\n    path: {}\n  workspace_root: {}\n  milestone_id: {}\n  verified_milestone_id: null\n  track: {}\n{}```\n\n## {} location\n\n{}/\n\n## Workspace root\n\n{}/\n\n## Rules\n\n- Always read the current milestone `agent.md` before starting work.\n- Work in this project workspace, not in the `primer` repository.\n- Build the current milestone in small steps and do not implement future milestones early.\n- Run current milestone verification before declaring completion.\n- Only run `primer-next-milestone` after `primer-verify` has marked the current milestone as verified.\n- Use the local `primer` CLI as the source of truth for `primer-build`, `primer-track`, `primer-verify`, `primer-status`, `primer-explain`, and `primer-next-milestone`.\n- Use the generated Primer workflow actions for behavior rules.\n\n## Track Invariants\n\n{}\n\n## Available workflow actions\n\n- `primer-build` — implement the current milestone step by step\n- `primer-track` — switch the active learner or builder track for this workspace\n- `primer-next-milestone` — advance state only after the milestone is already verified\n- `primer-verify` — run current milestone verification\n- `primer-explain` — show current milestone explanation\n- `primer-status` — show current state and progress\n",
+        workflow.title,
+        workflow.source_kind.as_str(),
+        workflow.source_id,
+        workflow.source_path.display(),
         workspace_root.display(),
         milestone_id,
         track,
-        recipe.stack_id,
-        recipe_path.display(),
+        stack_id,
+        source_label,
+        workflow.source_path.display(),
         workspace_root.display(),
         render_track_invariants(track)
     )
@@ -439,10 +498,12 @@ mod tests {
         assert!(out.join(".agents/skills/primer-verify/SKILL.md").exists());
 
         let context = read(&out.join("AGENTS.md"));
-        assert!(context.contains("recipe_id: operating-system"));
+        assert!(context.contains("schema_version: 2"));
+        assert!(context.contains("kind: recipe"));
+        assert!(context.contains("id: operating-system"));
         assert!(context.contains("milestone_id: 01-bootloader"));
         assert!(context.contains("primer-track"));
-        assert!(context.contains(&format!("recipe_path: {}", recipe_path.display())));
+        assert!(context.contains(&format!("path: {}", recipe_path.display())));
     }
 
     #[test]
@@ -472,6 +533,8 @@ mod tests {
         );
 
         let context = read(&out.join("CLAUDE.md"));
+        assert!(context.contains("kind: recipe"));
+        assert!(context.contains("id: operating-system"));
         assert!(context.contains("track: builder"));
         assert!(context.contains("milestone_id: 03-vga-output"));
     }
@@ -500,7 +563,8 @@ mod tests {
         assert!(out.join(".opencode/skills/primer-verify/SKILL.md").exists());
 
         let context = read(&out.join("AGENTS.md"));
-        assert!(context.contains("recipe_id: operating-system"));
+        assert!(context.contains("kind: recipe"));
+        assert!(context.contains("id: operating-system"));
         assert!(context.contains("milestone_id: 01-bootloader"));
 
         let skill = read(&out.join(".opencode/skills/primer-build/SKILL.md"));
@@ -532,7 +596,8 @@ mod tests {
         assert!(out.join(".gemini/skills/primer-verify/SKILL.md").exists());
 
         let context = read(&out.join("GEMINI.md"));
-        assert!(context.contains("recipe_id: operating-system"));
+        assert!(context.contains("kind: recipe"));
+        assert!(context.contains("id: operating-system"));
         assert!(context.contains("milestone_id: 01-bootloader"));
 
         let skill = read(&out.join(".gemini/skills/primer-build/SKILL.md"));
@@ -564,7 +629,8 @@ mod tests {
         assert!(out.join(".cursor/skills/primer-verify/SKILL.md").exists());
 
         let context = read(&out.join("AGENTS.md"));
-        assert!(context.contains("recipe_id: operating-system"));
+        assert!(context.contains("kind: recipe"));
+        assert!(context.contains("id: operating-system"));
         assert!(context.contains("milestone_id: 01-bootloader"));
 
         let skill = read(&out.join(".cursor/skills/primer-build/SKILL.md"));

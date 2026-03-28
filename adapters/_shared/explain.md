@@ -5,13 +5,13 @@ Show or summarize the explanation for the current milestone.
 ## Inputs
 
 - Context file with `primer_state`
-- Recipe path from context file
+- Workflow source path from context file
 - Current milestone `explanation.md`
 
 ## Behavior
 
 1. Read and validate `primer_state`.
-2. Resolve current milestone from `recipe.yaml`.
+2. Resolve current milestone from the active workflow source.
 3. Read `explanation.md` for current milestone.
 4. Present explanation content (verbatim or concise summary, adapter-defined).
 

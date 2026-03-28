@@ -1,15 +1,15 @@
 use anyhow::{Result, bail};
 use std::path::Path;
 
-use crate::recipe;
 use crate::state;
 use crate::ui;
+use crate::workflow;
 
 pub fn run(workspace_hint: &Path) -> Result<()> {
     let mut state = state::load_from_workspace(workspace_hint)?;
-    let recipe = recipe::load_from_path(&state.recipe_path)?;
-    let current = recipe::resolve_initial_milestone(&recipe, Some(&state.milestone_id))?;
-    let current_index = recipe::milestone_index(&recipe, &state.milestone_id)?;
+    let workflow = workflow::load(&state.source)?;
+    let current = workflow::resolve_initial_milestone(&workflow, Some(&state.milestone_id))?;
+    let current_index = workflow::milestone_index(&workflow, &state.milestone_id)?;
 
     if state.verified_milestone_id.as_deref() != Some(current.id.as_str()) {
         bail!(
@@ -19,10 +19,10 @@ pub fn run(workspace_hint: &Path) -> Result<()> {
         );
     }
 
-    let Some(next) = recipe.milestones.get(current_index + 1) else {
+    let Some(next) = workflow.milestones.get(current_index + 1) else {
         ui::section("Primer next milestone");
         println!();
-        ui::success("Recipe complete");
+        ui::success("Workflow complete");
         println!(
             "The final milestone {} is already verified. No state changes were made.",
             ui::code(&current.id)
@@ -34,12 +34,12 @@ pub fn run(workspace_hint: &Path) -> Result<()> {
     state.verified_milestone_id = None;
     state::write(&state)?;
 
-    let spec_path = recipe
+    let spec_path = workflow
         .path
         .join("milestones")
         .join(&next.id)
         .join("spec.md");
-    let explanation_path = recipe
+    let explanation_path = workflow
         .path
         .join("milestones")
         .join(&next.id)

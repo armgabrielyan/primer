@@ -325,6 +325,7 @@ Use the CLI directly for setup, diagnostics, and terminal utilities:
 | `primer list` | List available recipes | when you are exploring |
 | `primer init` | Create a workspace and generate adapter files | when you are starting a new project |
 | `primer doctor` | Check local prerequisites for a recipe milestone | before you begin or when setup is failing |
+| `primer workstream init` | Bootstrap Primer inside the current repository for one brownfield workstream | when you want a milestone path inside an existing repo |
 | `primer track` | Switch the active learner or builder track in the current workspace | when you want to change interaction style mid-workflow |
 | `primer completions` | Generate shell completion scripts | when you want faster terminal use |
 
@@ -332,6 +333,12 @@ Useful safety flags:
 
 - `primer init --dry-run` shows what would happen without writing files.
 - `primer init --force` allows initialization into a non-empty directory.
+
+For an existing repository, bootstrap a repo-local workstream from the repository root:
+
+```bash
+primer workstream init auth-refactor --goal "Reduce auth pipeline complexity" --tool codex --track learner
+```
 
 ## Workspace Model
 
@@ -350,6 +357,8 @@ After `primer init`, your generated workspace contains:
 - tool-specific instructions and workflow actions
 
 For most users, the generated workspace opened inside the AI coding agent is the primary interface. The CLI exists to support that workflow.
+
+For brownfield work inside an existing repository, Primer can also run in repo-local workstream mode. In that case it stores authored workstream files under `.primer/workstreams/<workstream-id>/` and runtime verification history under `.primer/runtime/workstreams/<workstream-id>/`, while keeping one active workstream in the root adapter context for v1.
 
 ## Troubleshooting
 

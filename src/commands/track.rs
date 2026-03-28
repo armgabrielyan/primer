@@ -3,14 +3,14 @@ use comfy_table::Color;
 use std::path::Path;
 
 use crate::cli::TrackArgs;
-use crate::recipe;
 use crate::state;
 use crate::ui;
+use crate::workflow;
 
 pub fn run(workspace_hint: &Path, args: TrackArgs) -> Result<()> {
     let mut state = state::load_from_workspace(workspace_hint)?;
-    let recipe = recipe::load_from_path(&state.recipe_path)?;
-    let milestone = recipe::resolve_initial_milestone(&recipe, Some(&state.milestone_id))?;
+    let workflow = workflow::load(&state.source)?;
+    let milestone = workflow::resolve_initial_milestone(&workflow, Some(&state.milestone_id))?;
     let previous_track = state.track.clone();
     let next_track = args.track.as_str();
     let changed = previous_track != next_track;
@@ -32,8 +32,8 @@ pub fn run(workspace_hint: &Path, args: TrackArgs) -> Result<()> {
     println!();
     ui::key_value_table(&[
         ui::KeyValueRow {
-            key: "Recipe".to_string(),
-            value: recipe.id.clone(),
+            key: state.source.kind.label().to_string(),
+            value: state.source.id.clone(),
             value_color: None,
         },
         ui::KeyValueRow {

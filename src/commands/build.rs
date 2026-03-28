@@ -3,16 +3,16 @@ use comfy_table::Color;
 use std::fs;
 use std::path::Path;
 
-use crate::recipe;
 use crate::state;
 use crate::ui;
+use crate::workflow;
 
 pub fn run(workspace_hint: &Path) -> Result<()> {
     let state = state::load_from_workspace(workspace_hint)?;
-    let recipe = recipe::load_from_path(&state.recipe_path)?;
-    let milestone = recipe::resolve_initial_milestone(&recipe, Some(&state.milestone_id))?;
+    let workflow = workflow::load(&state.source)?;
+    let milestone = workflow::resolve_initial_milestone(&workflow, Some(&state.milestone_id))?;
 
-    let milestone_dir = recipe.path.join("milestones").join(&milestone.id);
+    let milestone_dir = workflow.path.join("milestones").join(&milestone.id);
     let spec_path = milestone_dir.join("spec.md");
     let agent_path = milestone_dir.join("agent.md");
 
@@ -36,8 +36,8 @@ pub fn run(workspace_hint: &Path) -> Result<()> {
     println!();
     ui::key_value_table(&[
         ui::KeyValueRow {
-            key: "Recipe".to_string(),
-            value: recipe.id.clone(),
+            key: state.source.kind.label().to_string(),
+            value: state.source.id.clone(),
             value_color: None,
         },
         ui::KeyValueRow {
@@ -51,11 +51,6 @@ pub fn run(workspace_hint: &Path) -> Result<()> {
             value_color: None,
         },
         ui::KeyValueRow {
-            key: "Workspace".to_string(),
-            value: state.workspace_root.display().to_string(),
-            value_color: Some(Color::Cyan),
-        },
-        ui::KeyValueRow {
             key: "Spec file".to_string(),
             value: spec_path.display().to_string(),
             value_color: Some(Color::DarkGrey),
@@ -64,6 +59,11 @@ pub fn run(workspace_hint: &Path) -> Result<()> {
             key: "Agent file".to_string(),
             value: agent_path.display().to_string(),
             value_color: Some(Color::DarkGrey),
+        },
+        ui::KeyValueRow {
+            key: "Workspace".to_string(),
+            value: state.workspace_root.display().to_string(),
+            value_color: Some(Color::Cyan),
         },
     ]);
 

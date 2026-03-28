@@ -5,14 +5,14 @@ Run verification for the current milestone in the learner project workspace.
 ## Inputs
 
 - Context file with `primer_state`
-- Recipe path from context file
+- Workflow source path from context file
 - Workspace root from context file
 - Current milestone verification script
 
 ## Behavior
 
 1. Read and validate `primer_state`.
-2. Resolve current milestone from `recipe.yaml`.
+2. Resolve current milestone from the active workflow source.
 3. Execute the current milestone verification script from `workspace_root`.
 4. If it passes, set `primer_state.verified_milestone_id` to the current milestone id.
 5. If it fails, clear `primer_state.verified_milestone_id` when it currently points at that milestone.

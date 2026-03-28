@@ -5,7 +5,7 @@ Build only the current milestone's required work, step by step.
 ## Inputs
 
 - Context file with `primer_state`
-- Recipe path from context file
+- Workflow source path from context file
 - Workspace root from context file
 - Current milestone `spec.md`
 - Current milestone `agent.md`
@@ -13,7 +13,7 @@ Build only the current milestone's required work, step by step.
 ## Behavior
 
 1. Read and validate `primer_state`.
-2. Resolve current milestone from `recipe.yaml`.
+2. Resolve current milestone from the active workflow source.
 3. Read current milestone `spec.md` and `agent.md`.
 4. Build only the current milestone scope in `workspace_root`.
 5. Do not implement future milestones or pre-build later subsystems.

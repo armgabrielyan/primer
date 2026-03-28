@@ -7,6 +7,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use crate::state::PrimerState;
+use crate::workflow::WorkflowSourceKind;
 
 static RECORD_COUNTER: AtomicU64 = AtomicU64::new(1);
 
@@ -44,7 +45,12 @@ pub struct VerificationRecordSummary {
 #[derive(Deserialize, Serialize)]
 struct VerificationRecord {
     schema_version: u32,
-    recipe_id: String,
+    #[serde(default = "default_source_kind")]
+    source_kind: WorkflowSourceKind,
+    #[serde(alias = "recipe_id")]
+    source_id: String,
+    #[serde(default)]
+    source_path: Option<PathBuf>,
     workspace_root: PathBuf,
     milestone_id: String,
     track: String,
@@ -66,12 +72,7 @@ struct VerificationCommandRecord {
 }
 
 pub fn summarize_for_milestone(state: &PrimerState) -> Result<VerificationSummary> {
-    let records_dir = state
-        .workspace_root
-        .join(".primer")
-        .join("runtime")
-        .join("verifications")
-        .join(&state.milestone_id);
+    let records_dir = records_dir(state);
 
     if !records_dir.is_dir() {
         return Ok(VerificationSummary {
@@ -161,12 +162,7 @@ pub fn write_record(
     cleared_prior_verified_state: bool,
     summary: Option<&str>,
 ) -> Result<PathBuf> {
-    let records_dir = state
-        .workspace_root
-        .join(".primer")
-        .join("runtime")
-        .join("verifications")
-        .join(&state.milestone_id);
+    let records_dir = records_dir(state);
     fs::create_dir_all(&records_dir)
         .with_context(|| format!("failed to create {}", records_dir.display()))?;
 
@@ -185,7 +181,9 @@ pub fn write_record(
 
     let record = VerificationRecord {
         schema_version: 1,
-        recipe_id: state.recipe_id.clone(),
+        source_kind: state.source.kind,
+        source_id: state.source.id.clone(),
+        source_path: Some(state.source.path.clone()),
         workspace_root: state.workspace_root.clone(),
         milestone_id: state.milestone_id.clone(),
         track: state.track.clone(),
@@ -214,4 +212,27 @@ pub fn write_record(
         serde_json::to_string_pretty(&record).context("failed to serialize verification record")?;
     fs::write(&path, json).with_context(|| format!("failed to write {}", path.display()))?;
     Ok(path)
+}
+
+fn default_source_kind() -> WorkflowSourceKind {
+    WorkflowSourceKind::Recipe
+}
+
+fn records_dir(state: &PrimerState) -> PathBuf {
+    match state.source.kind {
+        WorkflowSourceKind::Recipe => state
+            .workspace_root
+            .join(".primer")
+            .join("runtime")
+            .join("verifications")
+            .join(&state.milestone_id),
+        WorkflowSourceKind::Workstream => state
+            .workspace_root
+            .join(".primer")
+            .join("runtime")
+            .join("workstreams")
+            .join(&state.source.id)
+            .join("verifications")
+            .join(&state.milestone_id),
+    }
 }

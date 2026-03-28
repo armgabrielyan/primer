@@ -4,26 +4,50 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::paths;
+use crate::workflow::{WorkflowSourceKind, WorkflowSourceRef};
 
 #[derive(Debug, Clone)]
 pub struct PrimerState {
     pub context_path: PathBuf,
-    pub recipe_id: String,
-    pub recipe_path: PathBuf,
+    pub source: WorkflowSourceRef,
     pub workspace_root: PathBuf,
     pub milestone_id: String,
     pub verified_milestone_id: Option<String>,
     pub track: String,
-    pub stack_id: String,
+    pub stack_id: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-struct StateEnvelope {
-    primer_state: StateDoc,
+struct StateEnvelopeV2 {
+    primer_state: StateDocV2,
+}
+
+#[derive(Debug, Deserialize)]
+struct StateEnvelopeAny {
+    primer_state: StateDocAny,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+enum StateDocAny {
+    V2(StateDocV2),
+    Legacy(LegacyStateDoc),
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-struct StateDoc {
+struct StateDocV2 {
+    schema_version: u32,
+    source: SourceDoc,
+    workspace_root: PathBuf,
+    milestone_id: String,
+    verified_milestone_id: Option<String>,
+    track: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    stack_id: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct LegacyStateDoc {
     recipe_id: String,
     recipe_path: PathBuf,
     workspace_root: PathBuf,
@@ -31,6 +55,13 @@ struct StateDoc {
     verified_milestone_id: Option<String>,
     track: String,
     stack_id: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+struct SourceDoc {
+    kind: WorkflowSourceKind,
+    id: String,
+    path: PathBuf,
 }
 
 pub fn load_from_workspace(dir: &Path) -> Result<PrimerState> {
@@ -46,27 +77,13 @@ pub fn load_from_workspace(dir: &Path) -> Result<PrimerState> {
             .with_context(|| format!("failed to read {}", path.display()))?;
         let yaml = extract_yaml_block(&text)
             .ok_or_else(|| anyhow!("no primer_state YAML block found in {}", path.display()))?;
-        let envelope: StateEnvelope = serde_yaml::from_str(&yaml)
+        let envelope: StateEnvelopeAny = serde_yaml::from_str(&yaml)
             .with_context(|| format!("failed to parse primer_state in {}", path.display()))?;
-        let state = envelope.primer_state;
-
-        if !state.recipe_path.is_absolute() {
-            bail!("recipe_path must be absolute in {}", path.display());
-        }
-        if !state.workspace_root.is_absolute() {
-            bail!("workspace_root must be absolute in {}", path.display());
-        }
-
-        return Ok(PrimerState {
-            context_path: path,
-            recipe_id: state.recipe_id,
-            recipe_path: paths::normalize(state.recipe_path),
-            workspace_root: paths::normalize(state.workspace_root),
-            milestone_id: state.milestone_id,
-            verified_milestone_id: state.verified_milestone_id,
-            track: state.track,
-            stack_id: state.stack_id,
-        });
+        let state = match envelope.primer_state {
+            StateDocAny::V2(state) => primer_state_from_v2(path.clone(), state)?,
+            StateDocAny::Legacy(state) => primer_state_from_legacy(path.clone(), state)?,
+        };
+        return Ok(state);
     }
 
     bail!(
@@ -82,10 +99,14 @@ pub fn write(state: &PrimerState) -> Result<()> {
     let (start, end) = yaml_block_span(&text)
         .ok_or_else(|| anyhow!("no primer_state YAML block found in {}", path.display()))?;
 
-    let yaml = serde_yaml::to_string(&StateEnvelope {
-        primer_state: StateDoc {
-            recipe_id: state.recipe_id.clone(),
-            recipe_path: state.recipe_path.clone(),
+    let yaml = serde_yaml::to_string(&StateEnvelopeV2 {
+        primer_state: StateDocV2 {
+            schema_version: 2,
+            source: SourceDoc {
+                kind: state.source.kind,
+                id: state.source.id.clone(),
+                path: state.source.path.clone(),
+            },
             workspace_root: state.workspace_root.clone(),
             milestone_id: state.milestone_id.clone(),
             verified_milestone_id: state.verified_milestone_id.clone(),
@@ -107,6 +128,65 @@ pub fn write(state: &PrimerState) -> Result<()> {
     Ok(())
 }
 
+fn primer_state_from_v2(context_path: PathBuf, state: StateDocV2) -> Result<PrimerState> {
+    if state.schema_version != 2 {
+        bail!(
+            "unsupported primer_state schema_version {} in {}",
+            state.schema_version,
+            context_path.display()
+        );
+    }
+    if !state.source.path.is_absolute() {
+        bail!("source.path must be absolute in {}", context_path.display());
+    }
+    if !state.workspace_root.is_absolute() {
+        bail!(
+            "workspace_root must be absolute in {}",
+            context_path.display()
+        );
+    }
+
+    Ok(PrimerState {
+        context_path,
+        source: WorkflowSourceRef {
+            kind: state.source.kind,
+            id: state.source.id,
+            path: paths::normalize(state.source.path),
+        },
+        workspace_root: paths::normalize(state.workspace_root),
+        milestone_id: state.milestone_id,
+        verified_milestone_id: state.verified_milestone_id,
+        track: state.track,
+        stack_id: state.stack_id,
+    })
+}
+
+fn primer_state_from_legacy(context_path: PathBuf, state: LegacyStateDoc) -> Result<PrimerState> {
+    if !state.recipe_path.is_absolute() {
+        bail!("recipe_path must be absolute in {}", context_path.display());
+    }
+    if !state.workspace_root.is_absolute() {
+        bail!(
+            "workspace_root must be absolute in {}",
+            context_path.display()
+        );
+    }
+
+    Ok(PrimerState {
+        context_path,
+        source: WorkflowSourceRef {
+            kind: WorkflowSourceKind::Recipe,
+            id: state.recipe_id,
+            path: paths::normalize(state.recipe_path),
+        },
+        workspace_root: paths::normalize(state.workspace_root),
+        milestone_id: state.milestone_id,
+        verified_milestone_id: state.verified_milestone_id,
+        track: state.track,
+        stack_id: Some(state.stack_id),
+    })
+}
+
 fn extract_yaml_block(text: &str) -> Option<String> {
     let (start, end) = yaml_block_span(text)?;
     let open_len = "```yaml".len();
@@ -124,6 +204,7 @@ fn yaml_block_span(text: &str) -> Option<(usize, usize)> {
 mod tests {
     use super::load_from_workspace;
     use crate::paths;
+    use crate::workflow::WorkflowSourceKind;
     use std::fs;
     use std::path::PathBuf;
     use std::time::{SystemTime, UNIX_EPOCH};
@@ -140,8 +221,8 @@ mod tests {
     }
 
     #[test]
-    fn load_from_workspace_supports_gemini_context() {
-        let workspace = temp_dir("state-gemini");
+    fn load_from_workspace_supports_legacy_recipe_state() {
+        let workspace = temp_dir("state-legacy");
         let recipe_path = workspace.join(".primer/recipes/demo");
         fs::create_dir_all(&recipe_path).expect("failed to create recipe path");
         let recipe_path =
@@ -163,7 +244,36 @@ mod tests {
         let context_path = paths::canonicalize(&workspace.join("GEMINI.md"))
             .expect("failed to canonicalize context");
         assert_eq!(state.context_path, context_path);
-        assert_eq!(state.recipe_id, "demo");
+        assert_eq!(state.source.kind, WorkflowSourceKind::Recipe);
+        assert_eq!(state.source.id, "demo");
         assert_eq!(state.milestone_id, "01-alpha");
+        assert_eq!(state.stack_id.as_deref(), Some("test-stack"));
+    }
+
+    #[test]
+    fn load_from_workspace_supports_v2_workstream_state() {
+        let workspace = temp_dir("state-workstream");
+        let workstream_path = workspace.join(".primer/workstreams/auth-refactor");
+        fs::create_dir_all(&workstream_path).expect("failed to create workstream path");
+        let workstream_path =
+            paths::canonicalize(&workstream_path).expect("failed to canonicalize workstream path");
+        let workspace_root =
+            paths::canonicalize(&workspace).expect("failed to canonicalize workspace root");
+
+        fs::write(
+            workspace.join("AGENTS.md"),
+            format!(
+                "# Primer\n\n```yaml\nprimer_state:\n  schema_version: 2\n  source:\n    kind: workstream\n    id: auth-refactor\n    path: {}\n  workspace_root: {}\n  milestone_id: 01-map-boundary\n  verified_milestone_id: null\n  track: builder\n```\n",
+                workstream_path.display(),
+                workspace_root.display()
+            ),
+        )
+        .expect("failed to write AGENTS.md");
+
+        let state = load_from_workspace(&workspace).expect("failed to load state");
+        assert_eq!(state.source.kind, WorkflowSourceKind::Workstream);
+        assert_eq!(state.source.id, "auth-refactor");
+        assert_eq!(state.track, "builder");
+        assert!(state.stack_id.is_none());
     }
 }

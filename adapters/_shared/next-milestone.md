@@ -5,13 +5,13 @@ Advance to the next milestone only after the current milestone has already been 
 ## Inputs
 
 - Context file with `primer_state`
-- Recipe path from context file
+- Workflow source path from context file
 - Workspace root from context file
 
 ## Behavior
 
 1. Read and validate `primer_state`.
-2. Resolve current milestone from `recipe.yaml`.
+2. Resolve current milestone from the active workflow source.
 3. If `verified_milestone_id` is not equal to the current milestone id, stop and instruct the user to run `primer-verify`.
 4. If current milestone is final, return completion summary; do not update state.
 5. Otherwise set `primer_state.milestone_id` to the next declared milestone and clear `verified_milestone_id`.
@@ -24,7 +24,7 @@ Advance to the next milestone only after the current milestone has already been 
 
 - Allowed: `primer_state.milestone_id`
 - Allowed: clear `primer_state.verified_milestone_id` when advancing
-- Forbidden: changes to `recipe_id`, `track`, `stack_id`
+- Forbidden: changes to `source`, `workspace_root`, `track`, `stack_id`
 
 ## Failure Modes
 

@@ -31,6 +31,9 @@ pub enum Commands {
     /// Check required local tools for a recipe milestone
     Doctor(DoctorArgs),
 
+    /// Manage repository-local Primer workstreams
+    Workstream(WorkstreamArgs),
+
     /// Show current Primer workspace progress
     Status,
 
@@ -97,6 +100,36 @@ pub struct DoctorArgs {
     /// Milestone identifier to check against
     #[arg(long, value_name = "ID")]
     pub milestone: Option<String>,
+}
+
+#[derive(Debug, Clone, Args)]
+pub struct WorkstreamArgs {
+    #[command(subcommand)]
+    pub command: WorkstreamCommands,
+}
+
+#[derive(Debug, Clone, Subcommand)]
+pub enum WorkstreamCommands {
+    /// Initialize a Primer workstream in the current repository
+    Init(WorkstreamInitArgs),
+}
+
+#[derive(Debug, Clone, Args)]
+pub struct WorkstreamInitArgs {
+    /// Workstream identifier
+    pub workstream_id: String,
+
+    /// Short workstream goal
+    #[arg(long, value_name = "TEXT")]
+    pub goal: String,
+
+    /// AI tool adapter to generate
+    #[arg(long, value_enum)]
+    pub tool: Tool,
+
+    /// Initial interaction track
+    #[arg(long, value_enum, default_value_t = Track::Learner)]
+    pub track: Track,
 }
 
 #[derive(Debug, Clone, Args)]

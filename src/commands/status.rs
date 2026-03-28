@@ -2,19 +2,19 @@ use anyhow::Result;
 use comfy_table::Color;
 use std::path::Path;
 
-use crate::recipe;
 use crate::retry_guidance::{self, RetryLevel};
 use crate::state;
 use crate::ui;
 use crate::verification_history::{self, VerificationOutcomeSummary};
+use crate::workflow;
 
 pub fn run(workspace_hint: &Path) -> Result<()> {
     let state = state::load_from_workspace(workspace_hint)?;
-    let recipe = recipe::load_from_path(&state.recipe_path)?;
-    let current = recipe::resolve_initial_milestone(&recipe, Some(&state.milestone_id))?;
-    let current_index = recipe::milestone_index(&recipe, &state.milestone_id)?;
+    let workflow = workflow::load(&state.source)?;
+    let current = workflow::resolve_initial_milestone(&workflow, Some(&state.milestone_id))?;
+    let current_index = workflow::milestone_index(&workflow, &state.milestone_id)?;
     let verified = state.verified_milestone_id.as_deref() == Some(state.milestone_id.as_str());
-    let next = recipe.milestones.get(current_index + 1);
+    let next = workflow.milestones.get(current_index + 1);
     let verification_summary = verification_history::summarize_for_milestone(&state)?;
     let retry_assessment = retry_guidance::assess(&verification_summary);
     let workflow_state = workflow_state(verified, verification_summary.attempts, next.is_none());
@@ -28,18 +28,13 @@ pub fn run(workspace_hint: &Path) -> Result<()> {
             value_color: Some(workflow_state.color()),
         },
         ui::KeyValueRow {
-            key: "Recipe".to_string(),
-            value: state.recipe_id.clone(),
+            key: state.source.kind.label().to_string(),
+            value: state.source.id.clone(),
             value_color: None,
         },
         ui::KeyValueRow {
             key: "Track".to_string(),
             value: state.track.clone(),
-            value_color: None,
-        },
-        ui::KeyValueRow {
-            key: "Stack".to_string(),
-            value: state.stack_id.clone(),
             value_color: None,
         },
         ui::KeyValueRow {
@@ -53,6 +48,13 @@ pub fn run(workspace_hint: &Path) -> Result<()> {
             value_color: None,
         },
     ];
+    if let Some(stack_id) = state.stack_id.as_ref() {
+        rows.push(ui::KeyValueRow {
+            key: "Stack".to_string(),
+            value: stack_id.clone(),
+            value_color: None,
+        });
+    }
     if let Some(goal) = current.goal.as_ref() {
         rows.push(ui::KeyValueRow {
             key: "Goal".to_string(),
@@ -144,7 +146,7 @@ pub fn run(workspace_hint: &Path) -> Result<()> {
         },
         ui::KeyValueRow {
             key: "Progress".to_string(),
-            value: format!("{}/{}", current_index + 1, recipe.milestones.len()),
+            value: format!("{}/{}", current_index + 1, workflow.milestones.len()),
             value_color: None,
         },
         ui::KeyValueRow {
@@ -180,7 +182,7 @@ pub fn run(workspace_hint: &Path) -> Result<()> {
             ]);
         }
         WorkflowState::Complete => {
-            ui::numbered_steps(&["Recipe is complete.".to_string()]);
+            ui::numbered_steps(&["Workflow is complete.".to_string()]);
         }
         WorkflowState::ReadyToVerify => {
             let mut steps = vec![
