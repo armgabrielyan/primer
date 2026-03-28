@@ -221,6 +221,34 @@ fn workstream_flow_uses_repo_local_source_and_runtime_layout() {
     let build_stdout = String::from_utf8_lossy(&build.stdout);
     assert!(build_stdout.contains("Turn this scaffold into the first real brownfield milestone"));
 
+    let build_json = run_primer(&repo, &["build", "--json"]);
+    assert!(
+        build_json.status.success(),
+        "stderr: {}",
+        String::from_utf8_lossy(&build_json.stderr)
+    );
+    let json: serde_json::Value =
+        serde_json::from_slice(&build_json.stdout).expect("failed to parse JSON output");
+    assert_eq!(json["source"]["kind"], "workstream");
+    assert_eq!(json["source"]["id"], "billing-webhooks");
+    assert_eq!(
+        json["current_milestone"]["id"],
+        "01-customize-first-milestone"
+    );
+    assert_eq!(json["track"], "learner");
+    assert!(
+        json["contract_markdown"]
+            .as_str()
+            .expect("contract_markdown should be present")
+            .contains("Turn this scaffold into the first real brownfield milestone")
+    );
+    assert!(
+        json["track_guidance_markdown"]
+            .as_str()
+            .expect("track_guidance_markdown should be present")
+            .contains("Explain the repository area this workstream touches")
+    );
+
     let verify = run_primer(&repo, &["verify"]);
     assert!(!verify.status.success());
     let verify_stderr = String::from_utf8_lossy(&verify.stderr);

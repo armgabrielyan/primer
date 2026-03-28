@@ -795,6 +795,57 @@ fn build_shows_current_spec_and_track_guidance() {
 }
 
 #[test]
+fn build_json_reports_contract_and_track_guidance() {
+    let (_primer_root, workspace_root) = setup_fixture("build-json", None);
+
+    let output = run_primer(&workspace_root, &["build", "--json"]);
+
+    assert!(
+        output.status.success(),
+        "stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let json: serde_json::Value =
+        serde_json::from_slice(&output.stdout).expect("failed to parse JSON output");
+    assert_eq!(json["source"]["kind"], "recipe");
+    assert_eq!(json["source"]["id"], "demo");
+    assert_eq!(json["current_milestone"]["id"], "01-alpha");
+    assert_eq!(json["track"], "learner");
+    assert!(
+        json["contract_file"]
+            .as_str()
+            .expect("contract_file should be present")
+            .contains("milestones/01-alpha/spec.md")
+    );
+    assert!(
+        json["agent_file"]
+            .as_str()
+            .expect("agent_file should be present")
+            .contains("milestones/01-alpha/agent.md")
+    );
+    assert!(
+        json["contract_markdown"]
+            .as_str()
+            .expect("contract_markdown should be present")
+            .contains("Milestone 01: Alpha")
+    );
+    assert!(
+        json["track_guidance_markdown"]
+            .as_str()
+            .expect("track_guidance_markdown should be present")
+            .contains("Explain the alpha task before coding.")
+    );
+    let next_steps = json["next_steps"]
+        .as_array()
+        .expect("next_steps should be an array");
+    assert!(
+        next_steps
+            .iter()
+            .any(|step| step == "Run primer verify when the milestone is complete")
+    );
+}
+
+#[test]
 fn track_switch_updates_state_and_build_guidance() {
     let (_primer_root, workspace_root) = setup_fixture("track-switch", Some("01-alpha"));
 

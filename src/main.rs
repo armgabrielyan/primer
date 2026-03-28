@@ -49,7 +49,7 @@ fn main() -> Result<()> {
                 Commands::Status(args) => commands::status::run(&workspace_hint, args),
                 Commands::Track(args) => commands::track::run(&workspace_hint, args),
                 Commands::Verify(args) => commands::verify::run(&workspace_hint, args),
-                Commands::Build => commands::build::run(&workspace_hint),
+                Commands::Build(args) => commands::build::run(&workspace_hint, args),
                 Commands::NextMilestone(args) => {
                     commands::next_milestone::run(&workspace_hint, args)
                 }

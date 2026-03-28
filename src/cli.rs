@@ -53,7 +53,7 @@ pub enum Commands {
     Explain,
 
     /// Show the current milestone contract and track guidance
-    Build,
+    Build(BuildArgs),
 
     /// Generate shell completion scripts
     Completions {
@@ -174,6 +174,13 @@ pub struct VerifyArgs {
 
 #[derive(Debug, Clone, Args)]
 pub struct NextMilestoneArgs {
+    /// Print machine-readable JSON output
+    #[arg(long)]
+    pub json: bool,
+}
+
+#[derive(Debug, Clone, Args)]
+pub struct BuildArgs {
     /// Print machine-readable JSON output
     #[arg(long)]
     pub json: bool,

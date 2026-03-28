@@ -1,13 +1,67 @@
 use anyhow::{Context, Result, bail};
 use comfy_table::Color;
+use serde::Serialize;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
+use crate::cli::BuildArgs;
 use crate::state;
 use crate::ui;
 use crate::workflow;
 
-pub fn run(workspace_hint: &Path) -> Result<()> {
+struct BuildData {
+    source_kind: String,
+    source_id: String,
+    milestone_id: String,
+    milestone_title: String,
+    track: String,
+    contract_file: PathBuf,
+    agent_file: PathBuf,
+    workspace: PathBuf,
+    contract_markdown: String,
+    track_guidance_markdown: String,
+}
+
+#[derive(Serialize)]
+struct BuildJson {
+    source: BuildSourceJson,
+    current_milestone: BuildMilestoneJson,
+    track: String,
+    contract_file: String,
+    agent_file: String,
+    workspace: String,
+    contract_markdown: String,
+    track_guidance_markdown: String,
+    next_steps: Vec<String>,
+}
+
+#[derive(Serialize)]
+struct BuildSourceJson {
+    kind: String,
+    id: String,
+}
+
+#[derive(Serialize)]
+struct BuildMilestoneJson {
+    id: String,
+    title: String,
+}
+
+pub fn run(workspace_hint: &Path, args: BuildArgs) -> Result<()> {
+    let data = collect_build_data(workspace_hint)?;
+
+    if args.json {
+        let json = serde_json::to_string_pretty(&BuildJson::from_data(&data))
+            .context("failed to serialize build output")?;
+        println!("{json}");
+        return Ok(());
+    }
+
+    render_human(&data);
+    Ok(())
+}
+
+fn collect_build_data(workspace_hint: &Path) -> Result<BuildData> {
     let state = state::load_from_workspace(workspace_hint)?;
     let workflow = workflow::load(&state.source)?;
     let milestone = workflow::resolve_initial_milestone(&workflow, Some(&state.milestone_id))?;
@@ -32,37 +86,52 @@ pub fn run(workspace_hint: &Path) -> Result<()> {
         .with_context(|| format!("failed to read {}", agent_path.display()))?;
     let track_instructions = extract_track_section(&agent, &state.track)?;
 
+    Ok(BuildData {
+        source_kind: state.source.kind.as_str().to_string(),
+        source_id: state.source.id,
+        milestone_id: milestone.id.clone(),
+        milestone_title: milestone.title.clone(),
+        track: state.track,
+        contract_file: spec_path,
+        agent_file: agent_path,
+        workspace: state.workspace_root,
+        contract_markdown: spec,
+        track_guidance_markdown: track_instructions.to_string(),
+    })
+}
+
+fn render_human(data: &BuildData) {
     ui::section("Primer build");
     println!();
     ui::key_value_table(&[
         ui::KeyValueRow {
-            key: state.source.kind.label().to_string(),
-            value: state.source.id.clone(),
+            key: source_label(&data.source_kind).to_string(),
+            value: data.source_id.clone(),
             value_color: None,
         },
         ui::KeyValueRow {
             key: "Current milestone".to_string(),
-            value: format!("{} ({})", milestone.id, milestone.title),
+            value: format!("{} ({})", data.milestone_id, data.milestone_title),
             value_color: None,
         },
         ui::KeyValueRow {
             key: "Track".to_string(),
-            value: state.track.clone(),
+            value: data.track.clone(),
             value_color: None,
         },
         ui::KeyValueRow {
             key: "Contract file".to_string(),
-            value: spec_path.display().to_string(),
+            value: data.contract_file.display().to_string(),
             value_color: Some(Color::DarkGrey),
         },
         ui::KeyValueRow {
             key: "Agent file".to_string(),
-            value: agent_path.display().to_string(),
+            value: data.agent_file.display().to_string(),
             value_color: Some(Color::DarkGrey),
         },
         ui::KeyValueRow {
             key: "Workspace".to_string(),
-            value: state.workspace_root.display().to_string(),
+            value: data.workspace.display().to_string(),
             value_color: Some(Color::Cyan),
         },
     ]);
@@ -70,20 +139,46 @@ pub fn run(workspace_hint: &Path) -> Result<()> {
     println!();
     ui::section("Milestone contract");
     println!();
-    ui::print_markdown(spec.trim_end());
+    ui::print_markdown(data.contract_markdown.trim_end());
 
     println!();
     ui::section("Track guidance");
     println!();
-    ui::print_markdown(track_instructions.trim_end());
+    ui::print_markdown(data.track_guidance_markdown.trim_end());
 
     println!();
     ui::section("Next");
-    ui::numbered_steps(&[
+    ui::numbered_steps(&human_next_steps(data));
+}
+
+impl BuildJson {
+    fn from_data(data: &BuildData) -> Self {
+        BuildJson {
+            source: BuildSourceJson {
+                kind: data.source_kind.clone(),
+                id: data.source_id.clone(),
+            },
+            current_milestone: BuildMilestoneJson {
+                id: data.milestone_id.clone(),
+                title: data.milestone_title.clone(),
+            },
+            track: data.track.clone(),
+            contract_file: data.contract_file.display().to_string(),
+            agent_file: data.agent_file.display().to_string(),
+            workspace: data.workspace.display().to_string(),
+            contract_markdown: data.contract_markdown.clone(),
+            track_guidance_markdown: data.track_guidance_markdown.clone(),
+            next_steps: json_next_steps(data),
+        }
+    }
+}
+
+fn human_next_steps(data: &BuildData) -> Vec<String> {
+    vec![
         format!(
             "Implement only {} in {}",
-            ui::code(&milestone.id),
-            ui::code(state.workspace_root.display().to_string())
+            ui::code(&data.milestone_id),
+            ui::code(data.workspace.display().to_string())
         ),
         format!(
             "Run the {} when the milestone is complete",
@@ -94,9 +189,28 @@ pub fn run(workspace_hint: &Path) -> Result<()> {
             ui::code("primer track learner"),
             ui::code("primer track builder")
         ),
-    ]);
+    ]
+}
 
-    Ok(())
+fn json_next_steps(data: &BuildData) -> Vec<String> {
+    vec![
+        format!(
+            "Implement only {} in {}",
+            data.milestone_id,
+            data.workspace.display()
+        ),
+        "Run primer verify when the milestone is complete".to_string(),
+        "Switch tracks any time with primer track learner or primer track builder if you want different guidance"
+            .to_string(),
+    ]
+}
+
+fn source_label(kind: &str) -> &'static str {
+    match kind {
+        "recipe" => "Recipe",
+        "workstream" => "Workstream",
+        _ => "Source",
+    }
 }
 
 fn extract_track_section<'a>(agent_markdown: &'a str, track: &str) -> Result<&'a str> {
