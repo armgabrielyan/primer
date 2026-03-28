@@ -112,6 +112,9 @@ pub struct WorkstreamArgs {
 pub enum WorkstreamCommands {
     /// Initialize a Primer workstream in the current repository
     Init(WorkstreamInitArgs),
+
+    /// Switch the active Primer workstream in the current repository
+    Switch(WorkstreamSwitchArgs),
 }
 
 #[derive(Debug, Clone, Args)]
@@ -133,13 +136,19 @@ pub struct WorkstreamInitArgs {
 }
 
 #[derive(Debug, Clone, Args)]
+pub struct WorkstreamSwitchArgs {
+    /// Existing workstream identifier to activate
+    pub workstream_id: String,
+}
+
+#[derive(Debug, Clone, Args)]
 pub struct TrackArgs {
     /// Target interaction track
     #[arg(value_enum, value_name = "TRACK")]
     pub track: Track,
 }
 
-#[derive(Debug, Clone, Copy, ValueEnum)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
 pub enum Tool {
     Codex,
     Claude,

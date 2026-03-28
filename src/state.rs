@@ -75,8 +75,9 @@ pub fn load_from_workspace(dir: &Path) -> Result<PrimerState> {
 
         let text = fs::read_to_string(&path)
             .with_context(|| format!("failed to read {}", path.display()))?;
-        let yaml = extract_yaml_block(&text)
-            .ok_or_else(|| anyhow!("no primer_state YAML block found in {}", path.display()))?;
+        let Some(yaml) = extract_yaml_block(&text) else {
+            continue;
+        };
         let envelope: StateEnvelopeAny = serde_yaml::from_str(&yaml)
             .with_context(|| format!("failed to parse primer_state in {}", path.display()))?;
         let state = match envelope.primer_state {

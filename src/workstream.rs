@@ -4,6 +4,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::paths;
+use crate::workflow::{WorkflowSourceKind, WorkflowSourceRef};
 
 pub const INITIAL_MILESTONE_ID: &str = "01-customize-first-milestone";
 pub const INITIAL_MILESTONE_TITLE: &str = "Customize the first repo-specific milestone";
@@ -117,6 +118,47 @@ pub fn scaffold(repo_root: &Path, workstream_id: &str, goal: &str) -> Result<Pat
         .with_context(|| format!("failed to create {}", runtime_dir.display()))?;
 
     Ok(workstream_dir)
+}
+
+pub fn discover(repo_root: &Path) -> Result<Vec<WorkflowSourceRef>> {
+    let workstreams_dir = repo_root.join(".primer").join("workstreams");
+    if !workstreams_dir.is_dir() {
+        return Ok(Vec::new());
+    }
+
+    let mut workstreams = Vec::new();
+    for entry in fs::read_dir(&workstreams_dir)
+        .with_context(|| format!("failed to read {}", workstreams_dir.display()))?
+    {
+        let entry = entry.with_context(|| "failed to read directory entry".to_string())?;
+        let path = entry.path();
+        if !path.is_dir() || !path.join("workstream.yaml").is_file() {
+            continue;
+        }
+
+        let Some(id) = path.file_name().and_then(|name| name.to_str()) else {
+            continue;
+        };
+        workstreams.push(WorkflowSourceRef {
+            kind: WorkflowSourceKind::Workstream,
+            id: id.to_string(),
+            path,
+        });
+    }
+
+    workstreams.sort_by(|left, right| left.id.cmp(&right.id));
+    Ok(workstreams)
+}
+
+pub fn source_ref(repo_root: &Path, workstream_id: &str) -> WorkflowSourceRef {
+    WorkflowSourceRef {
+        kind: WorkflowSourceKind::Workstream,
+        id: workstream_id.to_string(),
+        path: repo_root
+            .join(".primer")
+            .join("workstreams")
+            .join(workstream_id),
+    }
 }
 
 fn render_workstream_yaml(

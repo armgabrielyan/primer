@@ -38,6 +38,9 @@ fn main() -> Result<()> {
                     WorkstreamCommands::Init(args) => {
                         commands::workstream::init(&workspace_hint, args)
                     }
+                    WorkstreamCommands::Switch(args) => {
+                        commands::workstream::switch(&workspace_hint, args)
+                    }
                 },
                 Commands::Status => commands::status::run(&workspace_hint),
                 Commands::Track(args) => commands::track::run(&workspace_hint, args),

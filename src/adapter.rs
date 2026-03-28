@@ -70,6 +70,50 @@ pub fn context_path_for_tool(tool: Tool) -> &'static str {
     }
 }
 
+pub fn detect_tool(workspace_root: &Path, context_path: &Path) -> Result<Tool> {
+    match context_path.file_name().and_then(|name| name.to_str()) {
+        Some("CLAUDE.md") => Ok(Tool::Claude),
+        Some("GEMINI.md") => Ok(Tool::Gemini),
+        Some("AGENTS.md") => {
+            let mut matches = Vec::new();
+            if workspace_root
+                .join(".agents/skills/primer-build/SKILL.md")
+                .is_file()
+            {
+                matches.push(Tool::Codex);
+            }
+            if workspace_root
+                .join(".cursor/skills/primer-build/SKILL.md")
+                .is_file()
+            {
+                matches.push(Tool::Cursor);
+            }
+            if workspace_root
+                .join(".opencode/skills/primer-build/SKILL.md")
+                .is_file()
+            {
+                matches.push(Tool::Opencode);
+            }
+
+            match matches.as_slice() {
+                [tool] => Ok(*tool),
+                [] => bail!(
+                    "unable to infer Primer tool from {}; expected one of .agents, .cursor, or .opencode Primer skill directories",
+                    context_path.display()
+                ),
+                _ => bail!(
+                    "unable to infer Primer tool from {}; multiple Primer AGENTS.md tool directories are present",
+                    context_path.display()
+                ),
+            }
+        }
+        _ => bail!(
+            "unable to infer Primer tool from unsupported context path {}",
+            context_path.display()
+        ),
+    }
+}
+
 fn generate_internal(
     workflow: &AdapterWorkflow<'_>,
     output_dir: &Path,
