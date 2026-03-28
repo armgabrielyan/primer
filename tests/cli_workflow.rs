@@ -436,6 +436,30 @@ fn next_milestone_requires_prior_verification() {
 }
 
 #[test]
+fn next_milestone_json_reports_blocked_transition() {
+    let (_primer_root, workspace_root) = setup_fixture("next-json-guard", None);
+
+    let output = run_primer(&workspace_root, &["next-milestone", "--json"]);
+
+    assert!(!output.status.success());
+    let json: serde_json::Value =
+        serde_json::from_slice(&output.stdout).expect("failed to parse JSON output");
+    assert_eq!(json["status"], "blocked");
+    assert_eq!(json["advanced"], false);
+    assert_eq!(json["verification_cleared"], false);
+    assert_eq!(json["previous_milestone"]["id"], "01-alpha");
+    assert_eq!(json["current_milestone"]["id"], "01-alpha");
+    assert!(
+        json["summary"]
+            .as_str()
+            .expect("summary should be present")
+            .contains("run primer verify first")
+    );
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("run the skill primer-verify first"));
+}
+
+#[test]
 fn next_milestone_advances_and_clears_verification() {
     let (_primer_root, workspace_root) = setup_fixture("next-success", Some("01-alpha"));
 
@@ -449,6 +473,73 @@ fn next_milestone_advances_and_clears_verification() {
     let context = read_context(&workspace_root);
     assert!(context.contains("milestone_id: 02-beta"));
     assert!(context.contains("verified_milestone_id: null"));
+}
+
+#[test]
+fn next_milestone_json_reports_advanced_transition() {
+    let (_primer_root, workspace_root) = setup_fixture("next-json-success", Some("01-alpha"));
+
+    let output = run_primer(&workspace_root, &["next-milestone", "--json"]);
+
+    assert!(
+        output.status.success(),
+        "stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let json: serde_json::Value =
+        serde_json::from_slice(&output.stdout).expect("failed to parse JSON output");
+    assert_eq!(json["status"], "advanced");
+    assert_eq!(json["advanced"], true);
+    assert_eq!(json["verification_cleared"], true);
+    assert_eq!(json["previous_milestone"]["id"], "01-alpha");
+    assert_eq!(json["current_milestone"]["id"], "02-beta");
+    assert!(
+        json["spec_path"]
+            .as_str()
+            .expect("spec_path should be present")
+            .contains("milestones/02-beta/spec.md")
+    );
+    assert!(
+        json["explanation_path"]
+            .as_str()
+            .expect("explanation_path should be present")
+            .contains("milestones/02-beta/explanation.md")
+    );
+    let context = read_context(&workspace_root);
+    assert!(context.contains("milestone_id: 02-beta"));
+    assert!(context.contains("verified_milestone_id: null"));
+}
+
+#[test]
+fn next_milestone_json_reports_complete_when_final_milestone_is_verified() {
+    let (_primer_root, workspace_root) = setup_fixture("next-json-complete", Some("01-alpha"));
+    let updated = read_context(&workspace_root)
+        .replace("milestone_id: 01-alpha", "milestone_id: 02-beta")
+        .replace(
+            "verified_milestone_id: 01-alpha",
+            "verified_milestone_id: 02-beta",
+        );
+    fs::write(workspace_root.join("CLAUDE.md"), updated).expect("failed to update context");
+
+    let output = run_primer(&workspace_root, &["next-milestone", "--json"]);
+
+    assert!(
+        output.status.success(),
+        "stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let json: serde_json::Value =
+        serde_json::from_slice(&output.stdout).expect("failed to parse JSON output");
+    assert_eq!(json["status"], "complete");
+    assert_eq!(json["advanced"], false);
+    assert_eq!(json["verification_cleared"], false);
+    assert_eq!(json["previous_milestone"]["id"], "02-beta");
+    assert_eq!(json["current_milestone"]["id"], "02-beta");
+    assert_eq!(json["spec_path"], serde_json::Value::Null);
+    assert_eq!(json["explanation_path"], serde_json::Value::Null);
+    let context = read_context(&workspace_root);
+    assert!(context.contains("milestone_id: 02-beta"));
+    assert!(context.contains("verified_milestone_id: 02-beta"));
 }
 
 #[test]

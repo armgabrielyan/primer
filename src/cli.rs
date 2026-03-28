@@ -47,7 +47,7 @@ pub enum Commands {
 
     /// Advance to the next milestone after verification
     #[command(name = "next-milestone")]
-    NextMilestone,
+    NextMilestone(NextMilestoneArgs),
 
     /// Show the explanation for the current milestone
     Explain,
@@ -167,6 +167,13 @@ pub struct StatusArgs {
 
 #[derive(Debug, Clone, Args)]
 pub struct VerifyArgs {
+    /// Print machine-readable JSON output
+    #[arg(long)]
+    pub json: bool,
+}
+
+#[derive(Debug, Clone, Args)]
+pub struct NextMilestoneArgs {
     /// Print machine-readable JSON output
     #[arg(long)]
     pub json: bool,

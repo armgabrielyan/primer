@@ -318,6 +318,7 @@ Primer also exposes matching CLI commands such as `primer build`, `primer track`
 
 Use `primer status --json` when you need the current workflow state in a machine-readable form.
 Use `primer verify --json` when you need the latest verification result as a machine-readable event.
+Use `primer next-milestone --json` when you need the milestone advancement result as a machine-readable transition.
 
 ## CLI Setup Commands
 

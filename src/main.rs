@@ -50,7 +50,9 @@ fn main() -> Result<()> {
                 Commands::Track(args) => commands::track::run(&workspace_hint, args),
                 Commands::Verify(args) => commands::verify::run(&workspace_hint, args),
                 Commands::Build => commands::build::run(&workspace_hint),
-                Commands::NextMilestone => commands::next_milestone::run(&workspace_hint),
+                Commands::NextMilestone(args) => {
+                    commands::next_milestone::run(&workspace_hint, args)
+                }
                 Commands::Explain => commands::explain::run(&workspace_hint),
                 Commands::Completions { .. } => unreachable!(),
             }
