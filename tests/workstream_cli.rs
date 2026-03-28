@@ -194,6 +194,24 @@ fn workstream_flow_uses_repo_local_source_and_runtime_layout() {
     assert!(status_stdout.contains("billing-webhooks"));
     assert!(status_stdout.contains("01-customize-first-milestone"));
 
+    let status_json = run_primer(&repo, &["status", "--json"]);
+    assert!(
+        status_json.status.success(),
+        "stderr: {}",
+        String::from_utf8_lossy(&status_json.stderr)
+    );
+    let json: serde_json::Value =
+        serde_json::from_slice(&status_json.stdout).expect("failed to parse JSON output");
+    assert_eq!(json["workflow_state"], "ready_to_build");
+    assert_eq!(json["source"]["kind"], "workstream");
+    assert_eq!(json["source"]["id"], "billing-webhooks");
+    assert_eq!(
+        json["current_milestone"]["id"],
+        "01-customize-first-milestone"
+    );
+    assert_eq!(json["verified"], false);
+    assert_eq!(json["verification"]["attempts"], 0);
+
     let build = run_primer(&repo, &["build"]);
     assert!(
         build.status.success(),

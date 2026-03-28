@@ -409,6 +409,54 @@ fn status_shows_ready_to_build_without_verification_history() {
 }
 
 #[test]
+fn status_json_reports_ready_to_build_contract_and_gate() {
+    let (_primer_root, workspace_root) = setup_fixture("status-json-build", None);
+
+    let output = run_primer(&workspace_root, &["status", "--json"]);
+
+    assert!(
+        output.status.success(),
+        "stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let json: serde_json::Value =
+        serde_json::from_slice(&output.stdout).expect("failed to parse JSON output");
+    assert_eq!(json["workflow_state"], "ready_to_build");
+    assert_eq!(json["source"]["kind"], "recipe");
+    assert_eq!(json["source"]["id"], "demo");
+    assert_eq!(json["track"], "learner");
+    assert_eq!(json["current_milestone"]["id"], "01-alpha");
+    assert_eq!(json["current_milestone"]["title"], "Alpha");
+    assert!(
+        json["current_milestone"]["goal"]
+            .as_str()
+            .expect("goal should be present")
+            .contains("Create the alpha marker")
+    );
+    assert_eq!(json["current_milestone"]["estimated_verify_minutes"], 1);
+    assert_eq!(json["verified"], false);
+    assert_eq!(json["verification"]["attempts"], 0);
+    assert_eq!(json["verification"]["last"], serde_json::Value::Null);
+    assert_eq!(json["retry_signal"]["level"], "clear");
+    assert_eq!(json["verification_gate"]["state"], "blocked");
+    assert_eq!(
+        json["verification_gate"]["summary"],
+        "blocked - milestone has not passed verification yet"
+    );
+    assert_eq!(json["progress"]["current"], 1);
+    assert_eq!(json["progress"]["total"], 2);
+    assert_eq!(json["next_milestone"]["id"], "02-beta");
+    let next_steps = json["next_steps"]
+        .as_array()
+        .expect("next_steps should be an array");
+    assert!(
+        next_steps
+            .iter()
+            .any(|step| step == "Run primer build to work on 01-alpha")
+    );
+}
+
+#[test]
 fn status_shows_ready_to_advance_after_passing_verification() {
     let (_primer_root, workspace_root) = setup_fixture("status-advance", None);
     write_file(&workspace_root.join("milestone.ok"), "ok\n");
@@ -432,6 +480,60 @@ fn status_shows_ready_to_advance_after_passing_verification() {
     assert!(stdout.contains("passed in"));
     assert!(stdout.contains("open - current milestone is verified"));
     assert!(stdout.contains("Run the skill primer-next-milestone to advance"));
+}
+
+#[test]
+fn status_json_reports_retry_signal_after_failed_verification() {
+    let (_primer_root, workspace_root) = setup_fixture("status-json-retry", None);
+    write_file(&workspace_root.join("milestone.ok"), "ok\n");
+
+    let verify = run_primer(&workspace_root, &["verify"]);
+    assert!(
+        verify.status.success(),
+        "stderr: {}",
+        String::from_utf8_lossy(&verify.stderr)
+    );
+    fs::remove_file(workspace_root.join("milestone.ok")).expect("failed to remove milestone.ok");
+
+    let failed_verify = run_primer(&workspace_root, &["verify"]);
+    assert!(!failed_verify.status.success());
+
+    let output = run_primer(&workspace_root, &["status", "--json"]);
+
+    assert!(
+        output.status.success(),
+        "stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let json: serde_json::Value =
+        serde_json::from_slice(&output.stdout).expect("failed to parse JSON output");
+    assert_eq!(json["workflow_state"], "ready_to_verify");
+    assert_eq!(json["verified"], false);
+    assert_eq!(json["verification"]["attempts"], 2);
+    assert_eq!(json["verification"]["passed_attempts"], 1);
+    assert_eq!(json["verification"]["failed_attempts"], 1);
+    assert_eq!(json["verification"]["failure_streak"], 1);
+    assert_eq!(json["verification"]["last"]["outcome"], "failed");
+    assert_eq!(json["retry_signal"]["level"], "retrying");
+    assert!(
+        json["retry_signal"]["label"]
+            .as_str()
+            .expect("retry label should be present")
+            .contains("retrying after 1 failed verification")
+    );
+    assert_eq!(json["verification_gate"]["state"], "blocked");
+    assert_eq!(
+        json["verification_gate"]["summary"],
+        "blocked - latest verification failed"
+    );
+    let next_steps = json["next_steps"]
+        .as_array()
+        .expect("next_steps should be an array");
+    assert!(
+        next_steps
+            .iter()
+            .any(|step| step == "If you are stuck, run primer explain for more context")
+    );
 }
 
 #[test]

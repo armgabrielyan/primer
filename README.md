@@ -316,6 +316,8 @@ Once the workspace is initialized, this is the primary way to use Primer:
 
 Primer also exposes matching CLI commands such as `primer build`, `primer track`, `primer status`, `primer explain`, `primer verify`, and `primer next-milestone`, but the default experience is to use the generated actions inside your AI coding agent.
 
+Use `primer status --json` when you need the current workflow state in a machine-readable form.
+
 ## CLI Setup Commands
 
 Use the CLI directly for setup, diagnostics, and terminal utilities:

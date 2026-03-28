@@ -35,7 +35,7 @@ pub enum Commands {
     Workstream(WorkstreamArgs),
 
     /// Show current milestone, verification state, and next action
-    Status,
+    Status(StatusArgs),
 
     /// Switch the active workspace track
     #[command(name = "track")]
@@ -156,6 +156,13 @@ pub struct TrackArgs {
     /// Target interaction track
     #[arg(value_enum, value_name = "TRACK")]
     pub track: Track,
+}
+
+#[derive(Debug, Clone, Args)]
+pub struct StatusArgs {
+    /// Print machine-readable JSON output
+    #[arg(long)]
+    pub json: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]

@@ -46,7 +46,7 @@ fn main() -> Result<()> {
                         commands::workstream::switch(&workspace_hint, args)
                     }
                 },
-                Commands::Status => commands::status::run(&workspace_hint),
+                Commands::Status(args) => commands::status::run(&workspace_hint, args),
                 Commands::Track(args) => commands::track::run(&workspace_hint, args),
                 Commands::Verify => commands::verify::run(&workspace_hint),
                 Commands::Build => commands::build::run(&workspace_hint),
