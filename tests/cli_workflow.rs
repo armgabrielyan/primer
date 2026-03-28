@@ -377,6 +377,81 @@ fn next_milestone_advances_and_clears_verification() {
 }
 
 #[test]
+fn status_shows_ready_to_build_without_verification_history() {
+    let (_primer_root, workspace_root) = setup_fixture("status-build", None);
+
+    let output = run_primer(&workspace_root, &["status"]);
+
+    assert!(
+        output.status.success(),
+        "stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("ready to build"));
+    assert!(stdout.contains("no verification attempts yet"));
+    assert!(stdout.contains("blocked - milestone has not passed verification yet"));
+    assert!(stdout.contains("Run the skill primer-build to work on"));
+}
+
+#[test]
+fn status_shows_ready_to_advance_after_passing_verification() {
+    let (_primer_root, workspace_root) = setup_fixture("status-advance", None);
+    write_file(&workspace_root.join("milestone.ok"), "ok\n");
+
+    let verify = run_primer(&workspace_root, &["verify"]);
+    assert!(
+        verify.status.success(),
+        "stderr: {}",
+        String::from_utf8_lossy(&verify.stderr)
+    );
+
+    let output = run_primer(&workspace_root, &["status"]);
+
+    assert!(
+        output.status.success(),
+        "stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("ready to advance"));
+    assert!(stdout.contains("passed in"));
+    assert!(stdout.contains("open - current milestone is verified"));
+    assert!(stdout.contains("Run the skill primer-next-milestone to advance"));
+}
+
+#[test]
+fn status_shows_failed_latest_verification_and_retry_guidance() {
+    let (_primer_root, workspace_root) = setup_fixture("status-retry", None);
+    write_file(&workspace_root.join("milestone.ok"), "ok\n");
+
+    let verify = run_primer(&workspace_root, &["verify"]);
+    assert!(
+        verify.status.success(),
+        "stderr: {}",
+        String::from_utf8_lossy(&verify.stderr)
+    );
+    fs::remove_file(workspace_root.join("milestone.ok")).expect("failed to remove milestone.ok");
+
+    let failed_verify = run_primer(&workspace_root, &["verify"]);
+    assert!(!failed_verify.status.success());
+
+    let output = run_primer(&workspace_root, &["status"]);
+
+    assert!(
+        output.status.success(),
+        "stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("ready to verify"));
+    assert!(stdout.contains("failed in"));
+    assert!(stdout.contains("blocked - latest verification failed"));
+    assert!(stdout.contains("Run the skill primer-verify again"));
+    assert!(stdout.contains("primer-explain for more context"));
+}
+
+#[test]
 fn build_shows_current_spec_and_track_guidance() {
     let (_primer_root, workspace_root) = setup_fixture("build", None);
 

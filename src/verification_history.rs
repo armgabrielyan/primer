@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -15,20 +15,37 @@ pub enum VerificationOutcome {
     Failed,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum VerificationOutcomeSummary {
+    Passed,
+    Failed,
+}
+
 pub struct VerificationCommand<'a> {
     pub program: &'a OsStr,
     pub args: &'a [OsString],
     pub script: &'a Path,
 }
 
-#[derive(Serialize)]
+pub struct VerificationSummary {
+    pub attempts: usize,
+    pub last: Option<VerificationRecordSummary>,
+}
+
+pub struct VerificationRecordSummary {
+    pub outcome: VerificationOutcomeSummary,
+    pub duration_ms: u128,
+    pub exit_code: Option<i32>,
+}
+
+#[derive(Deserialize, Serialize)]
 struct VerificationRecord {
     schema_version: u32,
     recipe_id: String,
     workspace_root: PathBuf,
     milestone_id: String,
     track: String,
-    outcome: &'static str,
+    outcome: String,
     recorded_at_unix_ms: u128,
     duration_ms: u128,
     verified_state_after: bool,
@@ -38,11 +55,75 @@ struct VerificationRecord {
     command: VerificationCommandRecord,
 }
 
-#[derive(Serialize)]
+#[derive(Deserialize, Serialize)]
 struct VerificationCommandRecord {
     program: String,
     args: Vec<String>,
     script_path: PathBuf,
+}
+
+pub fn summarize_for_milestone(state: &PrimerState) -> Result<VerificationSummary> {
+    let records_dir = state
+        .workspace_root
+        .join(".primer")
+        .join("runtime")
+        .join("verifications")
+        .join(&state.milestone_id);
+
+    if !records_dir.is_dir() {
+        return Ok(VerificationSummary {
+            attempts: 0,
+            last: None,
+        });
+    }
+
+    let mut attempts = 0usize;
+    let mut latest_key = None::<(u128, String)>;
+    let mut latest_record = None::<VerificationRecordSummary>;
+
+    for entry in fs::read_dir(&records_dir)
+        .with_context(|| format!("failed to read {}", records_dir.display()))?
+    {
+        let entry = entry
+            .with_context(|| format!("failed to read entry under {}", records_dir.display()))?;
+        let path = entry.path();
+        if !path.is_file() {
+            continue;
+        }
+
+        let raw = fs::read_to_string(&path)
+            .with_context(|| format!("failed to read {}", path.display()))?;
+        let record: VerificationRecord = serde_json::from_str(&raw)
+            .with_context(|| format!("failed to parse verification record {}", path.display()))?;
+        attempts += 1;
+
+        let filename = path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or_default()
+            .to_string();
+        let candidate_key = (record.recorded_at_unix_ms, filename);
+
+        if latest_key
+            .as_ref()
+            .is_none_or(|current| candidate_key > *current)
+        {
+            latest_key = Some(candidate_key);
+            latest_record = Some(VerificationRecordSummary {
+                outcome: match record.outcome.as_str() {
+                    "passed" => VerificationOutcomeSummary::Passed,
+                    _ => VerificationOutcomeSummary::Failed,
+                },
+                duration_ms: record.duration_ms,
+                exit_code: record.exit_code,
+            });
+        }
+    }
+
+    Ok(VerificationSummary {
+        attempts,
+        last: latest_record,
+    })
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -85,8 +166,8 @@ pub fn write_record(
         milestone_id: state.milestone_id.clone(),
         track: state.track.clone(),
         outcome: match outcome {
-            VerificationOutcome::Passed => "passed",
-            VerificationOutcome::Failed => "failed",
+            VerificationOutcome::Passed => "passed".to_string(),
+            VerificationOutcome::Failed => "failed".to_string(),
         },
         recorded_at_unix_ms: timestamp.as_millis(),
         duration_ms: duration.as_millis(),
