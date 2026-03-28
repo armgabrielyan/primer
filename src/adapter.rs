@@ -411,7 +411,7 @@ fn render_cli_backed_skill_body(command_name: &str, shared_body: &str) -> String
 
 fn render_build_skill_body(shared_body: &str) -> String {
     format!(
-        "Use the local Primer CLI to load the current milestone spec and track guidance before making changes.\n\n## Active track rules\n\n- Respect the current `track` from `primer_state`.\n- In learner track, use a teacher-student style: explain before coding, move in small steps, ask at least one question before major implementation, and check understanding before advancing.\n- In builder track, implement directly, keep commentary minimal, and focus on the smallest milestone-completing change.\n\n## Required action\n\n1. Run `primer build` from the current workspace root.\n2. Use that output as the current milestone contract and active track guidance.\n3. Then implement only the current milestone scope in the workspace.\n4. Recommend running `primer-verify` when the milestone is complete.\n\n## Shared contract reference\n\n{shared_body}\n"
+        "Use the local Primer CLI to load the current milestone contract and track guidance before making changes.\n\n## Active track rules\n\n- Respect the current `track` from `primer_state`.\n- In learner track, use a teacher-student style: explain before coding, move in small steps, ask at least one question before major implementation, and check understanding before advancing.\n- In builder track, implement directly, keep commentary minimal, and focus on the smallest milestone-completing change.\n\n## Required action\n\n1. Run `primer build` from the current workspace root.\n2. Use that output as the current milestone contract and active track guidance.\n3. Then implement only the current milestone scope in the workspace.\n4. Recommend running `primer-verify` when the milestone is complete.\n\n## Shared contract reference\n\n{shared_body}\n"
     )
 }
 
@@ -435,7 +435,7 @@ fn render_track_claude_command(shared_body: &str) -> String {
 
 fn render_build_claude_command(shared_body: &str) -> String {
     format!(
-        "# Primer Skill: `primer-build`\n\nUse the local Primer CLI to load the current milestone spec and track guidance before making changes.\n\n## Active track rules\n\n- Respect the current `track` from `primer_state`.\n- In learner track, use a teacher-student style: explain before coding, move in small steps, ask at least one question before major implementation, and check understanding before advancing.\n- In builder track, implement directly, keep commentary minimal, and focus on the smallest milestone-completing change.\n\n## Required action\n\n1. Run `primer build` from the current workspace root.\n2. Use that output as the current milestone contract and active track guidance.\n3. Then implement only the current milestone scope in the workspace.\n4. Recommend running `primer-verify` when the milestone is complete.\n\n## Shared contract reference\n\n{shared_body}\n"
+        "# Primer Skill: `primer-build`\n\nUse the local Primer CLI to load the current milestone contract and track guidance before making changes.\n\n## Active track rules\n\n- Respect the current `track` from `primer_state`.\n- In learner track, use a teacher-student style: explain before coding, move in small steps, ask at least one question before major implementation, and check understanding before advancing.\n- In builder track, implement directly, keep commentary minimal, and focus on the smallest milestone-completing change.\n\n## Required action\n\n1. Run `primer build` from the current workspace root.\n2. Use that output as the current milestone contract and active track guidance.\n3. Then implement only the current milestone scope in the workspace.\n4. Recommend running `primer-verify` when the milestone is complete.\n\n## Shared contract reference\n\n{shared_body}\n"
     )
 }
 
@@ -461,8 +461,11 @@ fn command_description(command_name: &str) -> String {
 
 fn default_prompt(command_name: &str) -> String {
     match command_name {
-        "track" => "Use $primer-track to switch the active learner or builder track for the current recipe milestone.".to_string(),
-        _ => format!("Use $primer-{command_name} for the current recipe milestone."),
+        "track" => {
+            "Use $primer-track to switch the active learner or builder track for the current Primer workspace."
+                .to_string()
+        }
+        _ => format!("Use $primer-{command_name} for the current active milestone in this Primer workspace."),
     }
 }
 

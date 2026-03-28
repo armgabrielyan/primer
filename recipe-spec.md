@@ -25,7 +25,7 @@ Each declared milestone must contain:
 - `spec.md`
 - `agent.md`
 - `explanation.md`
-- `tests/check.sh`
+- one verification script: `tests/verify.sh` preferred, `tests/check.sh` accepted for compatibility
 - `demo.sh`
 
 ## `recipe.yaml` Contract

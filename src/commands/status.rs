@@ -176,7 +176,7 @@ pub fn run(workspace_hint: &Path) -> Result<()> {
                     ui::code(&next.id)
                 ),
                 format!(
-                    "Read the next milestone spec and explanation for {}",
+                    "Read the next milestone contract and explanation for {}",
                     ui::code(&next.id)
                 ),
             ]);

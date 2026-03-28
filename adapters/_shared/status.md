@@ -18,7 +18,7 @@ Report current progress and next action.
   - track
   - stack id when present
   - current milestone id and title
-  - whether current milestone is already verified
+  - whether the current milestone is currently verified
   - verification attempt count
   - failed attempt count and current failure streak when relevant
   - latest verification result if available

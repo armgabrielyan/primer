@@ -4,13 +4,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 const DIFFICULTY_VALUES: &[&str] = &["beginner", "intermediate", "advanced"];
-const REQUIRED_MILESTONE_FILES: &[&str] = &[
-    "spec.md",
-    "agent.md",
-    "explanation.md",
-    "tests/check.sh",
-    "demo.sh",
-];
+const REQUIRED_MILESTONE_FILES: &[&str] = &["spec.md", "agent.md", "explanation.md", "demo.sh"];
 
 pub fn validate_recipe(recipe_target: &Path) -> Result<()> {
     let recipe_yaml = recipe_yaml_path(recipe_target);
@@ -396,6 +390,13 @@ pub fn validate_milestones(recipe_target: &Path) -> Vec<String> {
                 errors.push(error(&path, "required-file", "missing"));
             }
         }
+        if !has_verification_script(&milestone_dir) {
+            errors.push(error(
+                &milestone_dir.join("tests"),
+                "required-file",
+                "missing verification script; expected tests/verify.sh or tests/check.sh",
+            ));
+        }
 
         let agent_path = milestone_dir.join("agent.md");
         if agent_path.is_file() {
@@ -494,13 +495,21 @@ fn validate_agent_instructions(agent_path: &Path, agent_markdown: &str, errors: 
             "builder track must instruct the agent to implement directly",
         ));
     }
-    if !builder_lower.contains("check") {
+    if !(builder_lower.contains("check")
+        || builder_lower.contains("verify")
+        || builder_lower.contains("verification"))
+    {
         errors.push(error(
             agent_path,
             "agent.md",
-            "builder track must require running milestone checks",
+            "builder track must require running milestone verification",
         ));
     }
+}
+
+fn has_verification_script(milestone_dir: &Path) -> bool {
+    let tests_dir = milestone_dir.join("tests");
+    tests_dir.join("verify.sh").is_file() || tests_dir.join("check.sh").is_file()
 }
 
 fn extract_track_section<'a>(markdown: &'a str, heading: &str) -> Option<&'a str> {
@@ -590,7 +599,9 @@ fn is_milestone_id(value: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{validate_milestones, validate_recipe, validate_recipe_yaml};
+    use std::fs;
     use std::path::PathBuf;
+    use std::time::{SystemTime, UNIX_EPOCH};
 
     fn fixture(path: &str) -> PathBuf {
         PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -598,6 +609,24 @@ mod tests {
             .join("fixtures")
             .join("recipes")
             .join(path)
+    }
+
+    fn temp_dir(label: &str) -> PathBuf {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("time should be monotonic enough for tests")
+            .as_nanos();
+        let dir =
+            std::env::temp_dir().join(format!("primer-{label}-{}-{unique}", std::process::id()));
+        fs::create_dir_all(&dir).expect("failed to create temp dir");
+        dir
+    }
+
+    fn write_file(path: &PathBuf, contents: &str) {
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent).expect("failed to create parent dirs");
+        }
+        fs::write(path, contents).expect("failed to write file");
     }
 
     #[test]
@@ -659,12 +688,74 @@ mod tests {
         assert!(
             errors
                 .iter()
-                .any(|error| error.contains("running milestone checks"))
+                .any(|error| error.contains("running milestone verification"))
         );
     }
 
     #[test]
     fn unified_validator_accepts_valid_recipe() {
         assert!(validate_recipe(&fixture("valid-minimal")).is_ok());
+    }
+
+    #[test]
+    fn unified_validator_accepts_verify_script_as_verification_entrypoint() {
+        let recipe_dir = temp_dir("validation-verify-script");
+        write_file(
+            &recipe_dir.join("recipe.yaml"),
+            r#"id: verify-script-demo
+title: Verify Script Demo
+description: Demo recipe for verify.sh validation coverage.
+difficulty: beginner
+stack:
+  id: rust
+  label: Rust
+  tools:
+    - cargo
+tracks:
+  learner:
+    description: Learn in small steps.
+  builder:
+    description: Build directly.
+milestones:
+  - id: 01-start
+    title: Start
+    demo: Prints success.
+    prerequisites:
+      - bash
+"#,
+        );
+        write_file(&recipe_dir.join("README.md"), "# Verify Script Demo\n");
+        write_file(
+            &recipe_dir.join("milestones/01-start/spec.md"),
+            "# Milestone 01\n",
+        );
+        write_file(
+            &recipe_dir.join("milestones/01-start/explanation.md"),
+            "# Explanation\n",
+        );
+        write_file(
+            &recipe_dir.join("milestones/01-start/agent.md"),
+            r#"# Agent Instructions
+
+## Learner Track
+
+Explain the goal, then ask one question before coding?
+
+## Builder Track
+
+Implement directly and run verification before declaring the milestone done.
+"#,
+        );
+        write_file(
+            &recipe_dir.join("milestones/01-start/tests/verify.sh"),
+            "#!/usr/bin/env bash\nexit 0\n",
+        );
+        write_file(
+            &recipe_dir.join("milestones/01-start/demo.sh"),
+            "#!/usr/bin/env bash\necho demo\n",
+        );
+
+        let result = validate_recipe(&recipe_dir);
+        assert!(result.is_ok(), "{result:?}");
     }
 }

@@ -17,7 +17,7 @@ pub fn run(workspace_hint: &Path) -> Result<()> {
     let agent_path = milestone_dir.join("agent.md");
 
     if !spec_path.is_file() {
-        bail!("milestone spec not found at {}", spec_path.display());
+        bail!("milestone contract not found at {}", spec_path.display());
     }
     if !agent_path.is_file() {
         bail!(
@@ -51,7 +51,7 @@ pub fn run(workspace_hint: &Path) -> Result<()> {
             value_color: None,
         },
         ui::KeyValueRow {
-            key: "Spec file".to_string(),
+            key: "Contract file".to_string(),
             value: spec_path.display().to_string(),
             value_color: Some(Color::DarkGrey),
         },
@@ -68,7 +68,7 @@ pub fn run(workspace_hint: &Path) -> Result<()> {
     ]);
 
     println!();
-    ui::section("Milestone spec");
+    ui::section("Milestone contract");
     println!();
     ui::print_markdown(spec.trim_end());
 

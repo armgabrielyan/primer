@@ -1,6 +1,6 @@
 # Community Recipes
 
-Primer is meant to grow into a shared library of guided learning paths.
+Primer is meant to grow into a shared library of verified milestone paths.
 
 If you have a project that is teachable in milestones, testable from the command line, and valuable for other learners, we want contributions.
 
@@ -18,7 +18,7 @@ The best recipe ideas tend to have all of these properties:
 - substantial enough that an unguided prompt usually drifts or stalls
 - small enough per milestone that an agent can stay focused
 - runnable on a normal developer machine
-- checkable with deterministic shell commands
+- verifiable with deterministic shell commands
 - educational for both learner and builder tracks
 
 Examples of promising directions:
@@ -37,7 +37,7 @@ Before opening a PR, ask:
 
 1. Does each milestone have one obvious success condition?
 2. Can a learner recover if the agent makes a wrong turn?
-3. Does `check.sh` catch the most common failure modes?
+3. Does the milestone verification script catch the most common failure modes?
 4. Does the recipe teach something cumulative instead of bouncing between disconnected tasks?
 
 A recipe is easier to review when:
@@ -64,7 +64,7 @@ Keep the design simple:
 - one recipe should represent one learning path
 - one milestone should unlock one meaningful concept or capability
 - avoid speculative breadth in early-stage recipes
-- prefer deterministic checks over clever checks
+- prefer deterministic verification over clever verification
 
 ## Suggested Contribution Flow
 
@@ -72,7 +72,7 @@ Keep the design simple:
 2. Verify the ordering makes sense without reading implementation details.
 3. Write `recipe.yaml` with realistic prerequisites and demos.
 4. Draft `spec.md`, `agent.md`, and `explanation.md` for one milestone before writing all of them.
-5. Add `check.sh` and `demo.sh` as soon as possible so the contract stays honest.
+5. Add the milestone verification script and `demo.sh` as soon as possible so the contract stays honest.
 6. Run `cargo test` before opening a PR.
 
 ## Review Expectations
@@ -109,7 +109,7 @@ That means contributions should optimize for:
 
 - safety by default
 - visible progress
-- deterministic checks
+- deterministic verification
 - high teaching value
 - compatibility with the CLI workflow
 

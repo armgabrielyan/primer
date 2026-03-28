@@ -15,7 +15,7 @@ Advance to the next milestone only after the current milestone has already been 
 3. If `verified_milestone_id` is not equal to the current milestone id, stop and instruct the user to run `primer-verify`.
 4. If current milestone is final, return completion summary; do not update state.
 5. Otherwise set `primer_state.milestone_id` to the next declared milestone and clear `verified_milestone_id`.
-6. Load next milestone `spec.md` and `agent.md`.
+6. Load the next milestone contract file `spec.md` and `agent.md`.
 7. Follow track behavior:
   - learner: introduce and ask required learner question(s)
   - builder: begin implementation directly

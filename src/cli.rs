@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 #[derive(Debug, Parser)]
 #[command(name = "primer")]
-#[command(author, version, about = "Primer CLI for AI-guided project recipes", long_about = None)]
+#[command(author, version, about = "Primer CLI for verified milestone workflows", long_about = None)]
 #[command(propagate_version = true)]
 pub struct Cli {
     #[arg(
@@ -25,16 +25,16 @@ pub enum Commands {
     /// List available recipes
     List,
 
-    /// Initialize a new Primer workspace
+    /// Initialize a Primer workspace from a recipe
     Init(InitArgs),
 
-    /// Check required local tools for a recipe milestone
+    /// Inspect local prerequisites for a recipe milestone
     Doctor(DoctorArgs),
 
     /// Manage repository-local Primer workstreams
     Workstream(WorkstreamArgs),
 
-    /// Show current Primer workspace progress
+    /// Show current milestone, verification state, and next action
     Status,
 
     /// Switch the active workspace track
@@ -52,7 +52,7 @@ pub enum Commands {
     /// Show the explanation for the current milestone
     Explain,
 
-    /// Show current milestone build guidance
+    /// Show the current milestone contract and track guidance
     Build,
 
     /// Generate shell completion scripts
@@ -97,7 +97,7 @@ pub struct DoctorArgs {
     /// Recipe identifier to inspect. Defaults to the only recipe if there is one.
     pub recipe_id: Option<String>,
 
-    /// Milestone identifier to check against
+    /// Milestone identifier to inspect prerequisites for
     #[arg(long, value_name = "ID")]
     pub milestone: Option<String>,
 }
@@ -110,10 +110,10 @@ pub struct WorkstreamArgs {
 
 #[derive(Debug, Clone, Subcommand)]
 pub enum WorkstreamCommands {
-    /// Initialize a Primer workstream in the current repository
+    /// Initialize a repository-local Primer workstream
     Init(WorkstreamInitArgs),
 
-    /// Switch the active Primer workstream in the current repository
+    /// Switch the active repository-local Primer workstream
     Switch(WorkstreamSwitchArgs),
 }
 

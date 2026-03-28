@@ -1,10 +1,10 @@
 # Primer
 
-Primer is a guided workflow for learning and building real software projects with AI coding agents, one milestone at a time.
+Primer helps you build real software with AI agents one verified milestone at a time.
 
-The main work happens inside your AI coding agent. The `primer` CLI sets up the workspace, checks prerequisites, and powers the workflow under the hood.
+The main work happens inside your AI coding agent. The `primer` CLI sets up the workspace, verifies prerequisites, and powers the milestone workflow under the hood.
 
-Instead of handing an agent a huge vague task, Primer gives you a smaller contract, a way to verify it, and a clear next step.
+Instead of handing an agent a huge vague task, Primer gives you a milestone contract, a verification step, and a clear next action.
 
 Primer is a good fit if you want to:
 
@@ -348,7 +348,7 @@ Primer uses two separate locations:
 
 - the `primer` repo: recipes, adapter generation, the CLI engine, and shared workflow logic
 - your generated project workspace: the code and Primer state for the project you are building
-- your AI coding agent: the main place where you read, build, check, and advance milestones
+- your AI coding agent: the main place where you read, build, verify, and advance milestones
 
 Do not build inside the `primer` repo itself. `primer init` is designed to create or prepare a separate workspace for that work.
 

@@ -7,14 +7,14 @@ Build only the current milestone's required work, step by step.
 - Context file with `primer_state`
 - Workflow source path from context file
 - Workspace root from context file
-- Current milestone `spec.md`
+- Current milestone contract file `spec.md`
 - Current milestone `agent.md`
 
 ## Behavior
 
 1. Read and validate `primer_state`.
 2. Resolve current milestone from the active workflow source.
-3. Read current milestone `spec.md` and `agent.md`.
+3. Read the current milestone contract file `spec.md` and `agent.md`.
 4. Build only the current milestone scope in `workspace_root`.
 5. Do not implement future milestones or pre-build later subsystems.
 6. In learner track:
@@ -33,4 +33,4 @@ None. State is read-only for this skill.
 
 - Prefer deterministic file names, commands, and outputs from the milestone contract.
 - Avoid opportunistic refactors outside the milestone scope.
-- Keep the implementation aligned with the files listed in `spec.md` unless there is a concrete blocker.
+- Keep the implementation aligned with the files listed in the milestone contract `spec.md` unless there is a concrete blocker.
