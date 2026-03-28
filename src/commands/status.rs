@@ -3,6 +3,7 @@ use comfy_table::Color;
 use std::path::Path;
 
 use crate::recipe;
+use crate::retry_guidance::{self, RetryLevel};
 use crate::state;
 use crate::ui;
 use crate::verification_history::{self, VerificationOutcomeSummary};
@@ -15,6 +16,7 @@ pub fn run(workspace_hint: &Path) -> Result<()> {
     let verified = state.verified_milestone_id.as_deref() == Some(state.milestone_id.as_str());
     let next = recipe.milestones.get(current_index + 1);
     let verification_summary = verification_history::summarize_for_milestone(&state)?;
+    let retry_assessment = retry_guidance::assess(&verification_summary);
     let workflow_state = workflow_state(verified, verification_summary.attempts, next.is_none());
 
     ui::section("Primer status");
@@ -109,6 +111,27 @@ pub fn run(workspace_hint: &Path) -> Result<()> {
             value: verification_summary.attempts.to_string(),
             value_color: None,
         },
+    ]);
+    if verification_summary.failed_attempts > 0 {
+        rows.push(ui::KeyValueRow {
+            key: "Failed attempts".to_string(),
+            value: verification_summary.failed_attempts.to_string(),
+            value_color: None,
+        });
+    }
+    if retry_assessment.failure_streak > 0 {
+        rows.push(ui::KeyValueRow {
+            key: "Failure streak".to_string(),
+            value: retry_assessment.failure_streak.to_string(),
+            value_color: Some(Color::Red),
+        });
+        rows.push(ui::KeyValueRow {
+            key: "Retry signal".to_string(),
+            value: retry_assessment.label(),
+            value_color: Some(retry_signal_color(retry_assessment.level)),
+        });
+    }
+    rows.extend([
         ui::KeyValueRow {
             key: "Last verification".to_string(),
             value: last_verification_value(&verification_summary),
@@ -171,14 +194,24 @@ pub fn run(workspace_hint: &Path) -> Result<()> {
                     ui::code(&current.id)
                 ),
             ];
-            if matches!(
-                verification_summary.last.as_ref().map(|last| last.outcome),
-                Some(VerificationOutcomeSummary::Failed)
-            ) {
+            if retry_assessment.should_suggest_explain() {
                 steps.push(format!(
                     "If you are stuck, run the {} for more context",
                     ui::reference("skill", "primer-explain")
                 ));
+            }
+            if retry_assessment.should_surface_if_stuck()
+                && let Some(split_if_stuck) = current.split_if_stuck.as_ref()
+            {
+                steps.push(format!(
+                    "Follow the milestone's If stuck guidance: {split_if_stuck}"
+                ));
+            }
+            if retry_assessment.should_flag_scope_risk() {
+                steps.push(
+                    "If failures keep repeating, this milestone may need to be split or clarified before more retries."
+                        .to_string(),
+                );
             }
             ui::numbered_steps(&steps);
         }
@@ -307,5 +340,13 @@ fn format_duration_ms(duration_ms: u128) -> String {
         let minutes = duration_ms / 60_000;
         let seconds = (duration_ms % 60_000) / 1_000;
         format!("{minutes}m {seconds}s")
+    }
+}
+
+fn retry_signal_color(level: RetryLevel) -> Color {
+    match level {
+        RetryLevel::Clear => Color::Green,
+        RetryLevel::Retrying => Color::Yellow,
+        RetryLevel::Stuck | RetryLevel::Escalating => Color::Red,
     }
 }

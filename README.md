@@ -69,7 +69,7 @@ Then open the generated workspace in your AI coding agent and use the Primer wor
 - `primer-verify`: run milestone verification and mark it verified on success
 - `primer-next-milestone`: unlock the next milestone only after verification passes
 - `primer-explain`: show the deeper explanation for the current milestone
-- `primer-status`: show current milestone, verification state, and progress
+- `primer-status`: show current milestone, verification state, retries, and progress
 
 Primer is designed so that:
 

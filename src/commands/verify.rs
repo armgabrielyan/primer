@@ -7,6 +7,7 @@ use std::time::Instant;
 use which::which;
 
 use crate::recipe;
+use crate::retry_guidance;
 use crate::state;
 use crate::ui;
 use crate::verification_history::{self, VerificationCommand, VerificationOutcome};
@@ -67,6 +68,34 @@ pub fn run(workspace_hint: &Path) -> Result<()> {
             cleared_prior_verified_state,
             Some("milestone verification failed"),
         )?;
+        let verification_summary = verification_history::summarize_for_milestone(&state)?;
+        let retry_assessment = retry_guidance::assess(&verification_summary);
+        eprintln!();
+        eprintln!(
+            "Verification history for {}: {} attempt{}, {} failed, current failure streak {}.",
+            milestone.id,
+            verification_summary.attempts,
+            if verification_summary.attempts == 1 {
+                ""
+            } else {
+                "s"
+            },
+            verification_summary.failed_attempts,
+            retry_assessment.failure_streak
+        );
+        if retry_assessment.should_suggest_explain() {
+            eprintln!("Run primer explain for more context before the next retry.");
+        }
+        if retry_assessment.should_surface_if_stuck()
+            && let Some(split_if_stuck) = milestone.split_if_stuck.as_ref()
+        {
+            eprintln!("If stuck: {split_if_stuck}");
+        }
+        if retry_assessment.should_flag_scope_risk() {
+            eprintln!(
+                "This milestone may be too large or unclear. Consider splitting or clarifying it before more retries."
+            );
+        }
 
         if cleared_prior_verified_state {
             bail!(

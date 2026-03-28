@@ -459,10 +459,57 @@ fn status_shows_failed_latest_verification_and_retry_guidance() {
     );
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(stdout.contains("ready to verify"));
+    assert!(stdout.contains("Failed attempts"));
+    assert!(stdout.contains("Failure streak"));
+    assert!(stdout.contains("retrying after 1 failed verification"));
     assert!(stdout.contains("failed in"));
     assert!(stdout.contains("blocked - latest verification failed"));
     assert!(stdout.contains("Run the skill primer-verify again"));
     assert!(stdout.contains("primer-explain for more context"));
+}
+
+#[test]
+fn status_surfaces_if_stuck_guidance_after_two_failures() {
+    let (_primer_root, workspace_root) = setup_fixture("status-stuck", None);
+
+    let first = run_primer(&workspace_root, &["verify"]);
+    assert!(!first.status.success());
+
+    let second = run_primer(&workspace_root, &["verify"]);
+    assert!(!second.status.success());
+
+    let output = run_primer(&workspace_root, &["status"]);
+
+    assert!(
+        output.status.success(),
+        "stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("likely stuck after 2 consecutive failed verifications"));
+    assert!(stdout.contains("Follow the milestone's If stuck guidance"));
+    assert!(stdout.contains("First confirm the file path"));
+}
+
+#[test]
+fn verify_failure_flags_scope_risk_after_three_failures() {
+    let (_primer_root, workspace_root) = setup_fixture("verify-escalate", None);
+
+    for _ in 0..2 {
+        let output = run_primer(&workspace_root, &["verify"]);
+        assert!(!output.status.success());
+    }
+
+    let output = run_primer(&workspace_root, &["verify"]);
+
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains(
+        "Verification history for 01-alpha: 3 attempts, 3 failed, current failure streak 3."
+    ));
+    assert!(stderr.contains("Run primer explain for more context before the next retry."));
+    assert!(stderr.contains("If stuck: First confirm the file path and then re-run verification."));
+    assert!(stderr.contains("This milestone may be too large or unclear. Consider splitting or clarifying it before more retries."));
 }
 
 #[test]

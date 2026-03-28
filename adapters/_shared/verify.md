@@ -16,7 +16,8 @@ Run verification for the current milestone in the learner project workspace.
 3. Execute the current milestone verification script from `workspace_root`.
 4. If it passes, set `primer_state.verified_milestone_id` to the current milestone id.
 5. If it fails, clear `primer_state.verified_milestone_id` when it currently points at that milestone.
-6. Return pass/fail with script output.
+6. Record the verification attempt in runtime history.
+7. Return pass/fail with script output plus retry-aware guidance after failures.
 
 ## State Mutation
 

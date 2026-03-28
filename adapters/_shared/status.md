@@ -20,10 +20,12 @@ Report current progress and next action.
   - current milestone id and title
   - whether current milestone is already verified
   - verification attempt count
+  - failed attempt count and current failure streak when relevant
   - latest verification result if available
+  - retry or stuck signal derived from recent verification history
   - completed count and total count
   - next milestone id (or completion message if final)
-  - next allowed action
+  - next allowed action, including stuck-aware guidance after repeated failures
 
 ## State Mutation
 

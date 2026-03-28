@@ -4,6 +4,7 @@ mod cli;
 mod commands;
 mod paths;
 mod recipe;
+mod retry_guidance;
 mod state;
 mod ui;
 mod validation;

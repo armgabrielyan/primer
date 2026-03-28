@@ -29,6 +29,9 @@ pub struct VerificationCommand<'a> {
 
 pub struct VerificationSummary {
     pub attempts: usize,
+    pub passed_attempts: usize,
+    pub failed_attempts: usize,
+    pub failure_streak: usize,
     pub last: Option<VerificationRecordSummary>,
 }
 
@@ -73,13 +76,14 @@ pub fn summarize_for_milestone(state: &PrimerState) -> Result<VerificationSummar
     if !records_dir.is_dir() {
         return Ok(VerificationSummary {
             attempts: 0,
+            passed_attempts: 0,
+            failed_attempts: 0,
+            failure_streak: 0,
             last: None,
         });
     }
 
-    let mut attempts = 0usize;
-    let mut latest_key = None::<(u128, String)>;
-    let mut latest_record = None::<VerificationRecordSummary>;
+    let mut loaded_records = Vec::new();
 
     for entry in fs::read_dir(&records_dir)
         .with_context(|| format!("failed to read {}", records_dir.display()))?
@@ -95,34 +99,54 @@ pub fn summarize_for_milestone(state: &PrimerState) -> Result<VerificationSummar
             .with_context(|| format!("failed to read {}", path.display()))?;
         let record: VerificationRecord = serde_json::from_str(&raw)
             .with_context(|| format!("failed to parse verification record {}", path.display()))?;
-        attempts += 1;
-
         let filename = path
             .file_name()
             .and_then(|name| name.to_str())
             .unwrap_or_default()
             .to_string();
-        let candidate_key = (record.recorded_at_unix_ms, filename);
-
-        if latest_key
-            .as_ref()
-            .is_none_or(|current| candidate_key > *current)
-        {
-            latest_key = Some(candidate_key);
-            latest_record = Some(VerificationRecordSummary {
+        loaded_records.push((
+            record.recorded_at_unix_ms,
+            filename,
+            VerificationRecordSummary {
                 outcome: match record.outcome.as_str() {
                     "passed" => VerificationOutcomeSummary::Passed,
                     _ => VerificationOutcomeSummary::Failed,
                 },
                 duration_ms: record.duration_ms,
                 exit_code: record.exit_code,
-            });
+            },
+        ));
+    }
+
+    loaded_records.sort_by(|left, right| left.0.cmp(&right.0).then_with(|| left.1.cmp(&right.1)));
+
+    let attempts = loaded_records.len();
+    let mut passed_attempts = 0usize;
+    let mut failed_attempts = 0usize;
+    let mut failure_streak = 0usize;
+
+    for (_, _, record) in &loaded_records {
+        match record.outcome {
+            VerificationOutcomeSummary::Passed => {
+                passed_attempts += 1;
+                failure_streak = 0;
+            }
+            VerificationOutcomeSummary::Failed => {
+                failed_attempts += 1;
+                failure_streak += 1;
+            }
         }
     }
 
     Ok(VerificationSummary {
         attempts,
-        last: latest_record,
+        passed_attempts,
+        failed_attempts,
+        failure_streak,
+        last: loaded_records
+            .into_iter()
+            .last()
+            .map(|(_, _, record)| record),
     })
 }
 
