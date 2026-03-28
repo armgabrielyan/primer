@@ -233,6 +233,39 @@ pub fn validate_recipe_yaml(recipe_target: &Path) -> Vec<String> {
                     true,
                 );
             }
+            for key in ["goal", "verification_summary", "split_if_stuck"] {
+                if get(item, key).is_some() && get_string(item, key).is_none() {
+                    errors.push(error(
+                        &recipe_yaml,
+                        &format!("{field_base}.{key}"),
+                        "must be a string",
+                    ));
+                }
+            }
+            if let Some(expected_artifacts) = get(item, "expected_artifacts") {
+                validate_string_array(
+                    &mut errors,
+                    &recipe_yaml,
+                    &format!("{field_base}.expected_artifacts"),
+                    expected_artifacts,
+                    true,
+                );
+            }
+            if let Some(estimated_verify_minutes) = get(item, "estimated_verify_minutes") {
+                match estimated_verify_minutes.as_u64() {
+                    Some(0) => errors.push(error(
+                        &recipe_yaml,
+                        &format!("{field_base}.estimated_verify_minutes"),
+                        "must be a positive integer",
+                    )),
+                    Some(_) => {}
+                    None => errors.push(error(
+                        &recipe_yaml,
+                        &format!("{field_base}.estimated_verify_minutes"),
+                        "must be a positive integer",
+                    )),
+                }
+            }
         }
 
         let mut seen = std::collections::BTreeSet::new();
@@ -585,6 +618,26 @@ mod tests {
             errors
                 .iter()
                 .any(|error| error.contains("duplicate milestone id"))
+        );
+    }
+
+    #[test]
+    fn yaml_validator_rejects_invalid_milestone_metadata() {
+        let errors = validate_recipe_yaml(&fixture("invalid-yaml-milestone-metadata"));
+        assert!(
+            errors
+                .iter()
+                .any(|error| error.contains("verification_summary"))
+        );
+        assert!(
+            errors
+                .iter()
+                .any(|error| error.contains("expected_artifacts"))
+        );
+        assert!(
+            errors
+                .iter()
+                .any(|error| error.contains("estimated_verify_minutes"))
         );
     }
 

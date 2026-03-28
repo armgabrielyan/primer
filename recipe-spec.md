@@ -66,6 +66,14 @@ Each milestone item requires:
 - `demo` (string)
 - `prerequisites` (non-empty string array of executable/tool names required for that milestone)
 
+Optional milestone metadata:
+
+- `goal` (string)
+- `verification_summary` (string)
+- `expected_artifacts` (non-empty string array)
+- `estimated_verify_minutes` (positive integer)
+- `split_if_stuck` (string)
+
 Constraints:
 
 - IDs must be unique.

@@ -19,7 +19,7 @@ pub fn run(workspace_hint: &Path) -> Result<()> {
 
     ui::section("Primer status");
     println!();
-    ui::key_value_table(&[
+    let mut rows = vec![
         ui::KeyValueRow {
             key: "Workflow state".to_string(),
             value: workflow_state.label().to_string(),
@@ -50,6 +50,47 @@ pub fn run(workspace_hint: &Path) -> Result<()> {
             value: format!("{} ({})", current.id, current.title),
             value_color: None,
         },
+    ];
+    if let Some(goal) = current.goal.as_ref() {
+        rows.push(ui::KeyValueRow {
+            key: "Goal".to_string(),
+            value: goal.clone(),
+            value_color: None,
+        });
+    }
+    if let Some(summary) = current.verification_summary.as_ref() {
+        rows.push(ui::KeyValueRow {
+            key: "Verification summary".to_string(),
+            value: summary.clone(),
+            value_color: None,
+        });
+    }
+    if let Some(minutes) = current.estimated_verify_minutes {
+        rows.push(ui::KeyValueRow {
+            key: "Estimated verify time".to_string(),
+            value: if minutes == 1 {
+                "1 minute".to_string()
+            } else {
+                format!("{minutes} minutes")
+            },
+            value_color: None,
+        });
+    }
+    if !current.expected_artifacts.is_empty() {
+        rows.push(ui::KeyValueRow {
+            key: "Expected artifacts".to_string(),
+            value: current.expected_artifacts.join(", "),
+            value_color: None,
+        });
+    }
+    if let Some(split_if_stuck) = current.split_if_stuck.as_ref() {
+        rows.push(ui::KeyValueRow {
+            key: "If stuck".to_string(),
+            value: split_if_stuck.clone(),
+            value_color: None,
+        });
+    }
+    rows.extend([
         ui::KeyValueRow {
             key: "Verified".to_string(),
             value: if verified {
@@ -96,6 +137,7 @@ pub fn run(workspace_hint: &Path) -> Result<()> {
             value_color: Some(Color::DarkGrey),
         },
     ]);
+    ui::key_value_table(&rows);
 
     println!();
     ui::section("Next");

@@ -29,6 +29,11 @@ pub struct Milestone {
     pub id: String,
     pub title: String,
     pub prerequisites: Vec<String>,
+    pub goal: Option<String>,
+    pub verification_summary: Option<String>,
+    pub expected_artifacts: Vec<String>,
+    pub estimated_verify_minutes: Option<u32>,
+    pub split_if_stuck: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -56,6 +61,12 @@ struct MilestoneDoc {
     id: String,
     title: String,
     prerequisites: Vec<String>,
+    goal: Option<String>,
+    verification_summary: Option<String>,
+    #[serde(default)]
+    expected_artifacts: Vec<String>,
+    estimated_verify_minutes: Option<u32>,
+    split_if_stuck: Option<String>,
 }
 
 pub fn source(primer_root: Option<&Path>) -> Result<RecipeSource> {
@@ -269,6 +280,11 @@ fn parse_recipe_doc(raw: &str, path: &Path) -> Result<Recipe> {
                 id: m.id,
                 title: m.title,
                 prerequisites: m.prerequisites,
+                goal: m.goal,
+                verification_summary: m.verification_summary,
+                expected_artifacts: m.expected_artifacts,
+                estimated_verify_minutes: m.estimated_verify_minutes,
+                split_if_stuck: m.split_if_stuck,
             })
             .collect(),
     })

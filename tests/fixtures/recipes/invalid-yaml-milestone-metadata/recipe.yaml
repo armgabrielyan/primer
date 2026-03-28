@@ -1,0 +1,24 @@
+id: invalid-yaml-milestone-metadata
+title: Invalid Milestone Metadata
+description: Invalid milestone metadata types should fail schema validation.
+difficulty: beginner
+stack:
+  id: bash
+  label: Bash
+  tools:
+    - bash
+tracks:
+  learner:
+    description: Learner
+  builder:
+    description: Builder
+milestones:
+  - id: 01-start
+    title: Start
+    demo: Demo text.
+    verification_summary:
+      nested: wrong
+    expected_artifacts: output.txt
+    estimated_verify_minutes: 0
+    prerequisites:
+      - bash

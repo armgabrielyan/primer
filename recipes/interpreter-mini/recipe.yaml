@@ -18,24 +18,49 @@ tracks:
 milestones:
   - id: 01-tokenizer
     title: Tokenizer
+    goal: Convert source text into a predictable token stream for the tiny language.
+    verification_summary: Verify that representative expressions tokenize into the expected JSON token output.
+    expected_artifacts:
+      - interpreter.py
+    estimated_verify_minutes: 2
+    split_if_stuck: Handle one token category at a time and keep whitespace handling simple first.
     demo: Convert source text into a JSON token stream.
     prerequisites:
       - python3
       - bash
   - id: 02-parser
     title: Parser
+    goal: Build an AST with correct operator precedence from the token stream.
+    verification_summary: Verify that parsed arithmetic expressions produce the expected tree shape.
+    expected_artifacts:
+      - interpreter.py
+    estimated_verify_minutes: 3
+    split_if_stuck: Make the precedence cases pass before broadening error handling or cleanup.
     demo: Parse arithmetic expressions into an AST with correct precedence.
     prerequisites:
       - python3
       - bash
   - id: 03-evaluator
     title: Evaluator
+    goal: Evaluate parsed arithmetic expressions correctly from the AST.
+    verification_summary: Verify that expression inputs produce the expected numeric results.
+    expected_artifacts:
+      - interpreter.py
+    estimated_verify_minutes: 2
+    split_if_stuck: Start with literal and binary-expression evaluation before integrating all parser output paths.
     demo: Evaluate arithmetic expressions from the AST.
     prerequisites:
       - python3
       - bash
   - id: 04-variables-tests
     title: Variables and Tests
+    goal: Add variable assignment from files and prove the full interpreter pipeline with tests.
+    verification_summary: Verify that assignment-based programs run from files and the test suite passes.
+    expected_artifacts:
+      - interpreter.py
+      - test_interpreter.py
+    estimated_verify_minutes: 4
+    split_if_stuck: Get file execution stable first, then layer variable state and final test cleanup.
     demo: Run assignment-based programs from a file and pass unit tests.
     prerequisites:
       - python3

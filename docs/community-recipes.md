@@ -44,6 +44,8 @@ A recipe is easier to review when:
 
 - milestone scopes are crisp
 - titles are concrete
+- goals explain the capability change clearly
+- verification summaries explain what passing actually proves
 - demos describe user-visible outcomes
 - prerequisites are honest and cumulative
 - failure messages explain what to do next

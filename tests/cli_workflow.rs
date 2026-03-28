@@ -78,10 +78,19 @@ stack:
 milestones:
   - id: 01-alpha
     title: Alpha
+    goal: Create the alpha marker and keep the change isolated to the current workspace.
+    verification_summary: Verification passes when milestone.ok exists in the workspace root.
+    expected_artifacts:
+      - milestone.ok
+    estimated_verify_minutes: 1
+    split_if_stuck: First confirm the file path and then re-run verification.
     prerequisites:
       - bash
   - id: 02-beta
     title: Beta
+    goal: Create the beta marker in the workspace.
+    verification_summary: Verification passes when the beta milestone script exits successfully.
+    estimated_verify_minutes: 1
     prerequisites:
       - bash
 "#,
@@ -389,6 +398,11 @@ fn status_shows_ready_to_build_without_verification_history() {
     );
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(stdout.contains("ready to build"));
+    assert!(stdout.contains("Create the alpha marker and keep the change isolated"));
+    assert!(stdout.contains("Verification passes when milestone.ok exists"));
+    assert!(stdout.contains("Expected artifacts"));
+    assert!(stdout.contains("First confirm the file path"));
+    assert!(stdout.contains("1 minute"));
     assert!(stdout.contains("no verification attempts yet"));
     assert!(stdout.contains("blocked - milestone has not passed verification yet"));
     assert!(stdout.contains("Run the skill primer-build to work on"));

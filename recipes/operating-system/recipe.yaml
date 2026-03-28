@@ -19,6 +19,13 @@ tracks:
 milestones:
   - id: 01-bootloader
     title: Bootloader
+    goal: Produce a boot sector that QEMU can execute and that prints a visible startup message.
+    verification_summary: Verify that the disk image boots in QEMU and shows the expected bootloader output.
+    expected_artifacts:
+      - bootloader.asm
+      - Makefile
+    estimated_verify_minutes: 3
+    split_if_stuck: Get one reliable boot message first before changing layout or build rules further.
     demo: QEMU boots and prints a bootloader message.
     prerequisites:
       - nasm
@@ -26,6 +33,14 @@ milestones:
       - make
   - id: 02-kernel-entry
     title: Kernel Entry Point
+    goal: Transfer control cleanly from the bootloader into kernel entry code.
+    verification_summary: Verify that QEMU shows evidence that the kernel entry path is executing.
+    expected_artifacts:
+      - bootloader.asm
+      - kernel.c
+      - linker.ld
+    estimated_verify_minutes: 4
+    split_if_stuck: Make the jump to kernel entry observable before refining linker or build structure.
     demo: Control passes from bootloader to kernel entry code.
     prerequisites:
       - nasm
@@ -35,6 +50,13 @@ milestones:
       - i686-elf-ld
   - id: 03-vga-output
     title: VGA Text Driver
+    goal: Print kernel text directly through VGA memory.
+    verification_summary: Verify that kernel text output appears through the VGA text buffer path.
+    expected_artifacts:
+      - kernel.c
+      - vga.c
+    estimated_verify_minutes: 3
+    split_if_stuck: Hard-code one working text write first before abstracting the output helper.
     demo: Kernel prints text via VGA memory.
     prerequisites:
       - nasm
@@ -44,6 +66,14 @@ milestones:
       - i686-elf-ld
   - id: 04-interrupts
     title: GDT + Interrupts
+    goal: Set up protected-mode tables and handle keyboard interrupts safely.
+    verification_summary: Verify that keyboard input is delivered through the interrupt path.
+    expected_artifacts:
+      - gdt.c
+      - idt.c
+      - interrupts.c
+    estimated_verify_minutes: 5
+    split_if_stuck: Bring up one interrupt path end to end before broadening the handler setup.
     demo: Keyboard input is handled via IRQ.
     prerequisites:
       - nasm
@@ -53,6 +83,13 @@ milestones:
       - i686-elf-ld
   - id: 05-memory
     title: Memory Manager
+    goal: Add a basic allocator with observable alloc/free behavior in the kernel.
+    verification_summary: Verify that allocator operations behave correctly for the checked scenarios.
+    expected_artifacts:
+      - memory.c
+      - kernel.c
+    estimated_verify_minutes: 4
+    split_if_stuck: Start with the smallest allocator behavior that passes one allocation case first.
     demo: Basic allocator alloc/free behavior is validated.
     prerequisites:
       - nasm
@@ -62,6 +99,13 @@ milestones:
       - i686-elf-ld
   - id: 06-scheduler
     title: Process Scheduler
+    goal: Time-share execution between multiple processes with a round-robin scheduler.
+    verification_summary: Verify that two runnable processes alternate under the scheduler.
+    expected_artifacts:
+      - scheduler.c
+      - process.c
+    estimated_verify_minutes: 5
+    split_if_stuck: Get task switching working for two fixed processes before generalizing the scheduler.
     demo: Two processes time-share via round-robin.
     prerequisites:
       - nasm
@@ -71,6 +115,13 @@ milestones:
       - i686-elf-ld
   - id: 07-filesystem
     title: Simple Filesystem
+    goal: Read structured file data from a disk image inside the kernel.
+    verification_summary: Verify that the kernel can retrieve file contents from the filesystem image.
+    expected_artifacts:
+      - filesystem.c
+      - disk.c
+    estimated_verify_minutes: 5
+    split_if_stuck: Validate one simple file read path first before broadening metadata parsing.
     demo: Kernel reads data from a disk image.
     prerequisites:
       - nasm
@@ -80,6 +131,13 @@ milestones:
       - i686-elf-ld
   - id: 08-shell
     title: Userspace Shell
+    goal: Expose a minimal interactive shell on top of the kernel and filesystem work.
+    verification_summary: Verify that the shell starts, accepts input, and runs the checked commands in QEMU.
+    expected_artifacts:
+      - shell.c
+      - userspace/
+    estimated_verify_minutes: 6
+    split_if_stuck: Make one command loop work reliably before adding more shell behavior.
     demo: A basic interactive shell runs in QEMU.
     prerequisites:
       - nasm
