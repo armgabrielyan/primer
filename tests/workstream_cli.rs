@@ -87,6 +87,33 @@ fn workstream_list_reports_when_no_workstreams_exist() {
 }
 
 #[test]
+fn workstream_list_json_reports_when_no_workstreams_exist() {
+    let repo = temp_dir("workstream-list-empty-json");
+    fs::create_dir_all(repo.join(".git")).expect("failed to create .git dir");
+    let repo = fs::canonicalize(&repo).expect("failed to canonicalize repo path");
+
+    let list = run_primer(&repo, &["workstream", "list", "--json"]);
+
+    assert!(
+        list.status.success(),
+        "stderr: {}",
+        String::from_utf8_lossy(&list.stderr)
+    );
+    let json: serde_json::Value =
+        serde_json::from_slice(&list.stdout).expect("failed to parse JSON output");
+    assert_eq!(json["repository"], repo.display().to_string());
+    assert_eq!(json["active_workstream_id"], serde_json::Value::Null);
+    assert_eq!(json["count"], 0);
+    assert_eq!(
+        json["workstreams"]
+            .as_array()
+            .expect("workstreams should be an array")
+            .len(),
+        0
+    );
+}
+
+#[test]
 fn workstream_init_bootstraps_repo_local_workstream() {
     let repo = temp_dir("workstream-init");
     fs::create_dir_all(repo.join(".git")).expect("failed to create .git dir");
@@ -424,6 +451,45 @@ Implement the observability milestone directly and run verification.
     assert!(list_stdout.contains("02-auth-observability"));
     assert!(list_stdout.contains("Verified"));
     assert!(list_stdout.contains("yes"));
+
+    let list_json = run_primer(&repo, &["workstream", "list", "--json"]);
+    assert!(
+        list_json.status.success(),
+        "stderr: {}",
+        String::from_utf8_lossy(&list_json.stderr)
+    );
+    let json: serde_json::Value =
+        serde_json::from_slice(&list_json.stdout).expect("failed to parse JSON output");
+    assert_eq!(json["active_workstream_id"], "auth-refactor");
+    assert_eq!(json["count"], 2);
+    let workstreams = json["workstreams"]
+        .as_array()
+        .expect("workstreams should be an array");
+    let auth_refactor = workstreams
+        .iter()
+        .find(|item| item["id"] == "auth-refactor")
+        .expect("auth-refactor workstream missing");
+    assert_eq!(auth_refactor["active"], true);
+    assert_eq!(
+        auth_refactor["current_milestone_id"],
+        "02-auth-observability"
+    );
+    assert_eq!(
+        auth_refactor["current_milestone_title"],
+        "Add auth observability"
+    );
+    assert_eq!(auth_refactor["verified"], true);
+    assert_eq!(auth_refactor["milestone_count"], 2);
+    let billing_webhooks = workstreams
+        .iter()
+        .find(|item| item["id"] == "billing-webhooks")
+        .expect("billing-webhooks workstream missing");
+    assert_eq!(billing_webhooks["active"], false);
+    assert_eq!(
+        billing_webhooks["current_milestone_id"],
+        "01-customize-first-milestone"
+    );
+    assert_eq!(billing_webhooks["verified"], false);
 }
 
 #[test]

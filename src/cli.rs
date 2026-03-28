@@ -111,13 +111,20 @@ pub struct WorkstreamArgs {
 #[derive(Debug, Clone, Subcommand)]
 pub enum WorkstreamCommands {
     /// List repository-local Primer workstreams
-    List,
+    List(WorkstreamListArgs),
 
     /// Initialize a repository-local Primer workstream
     Init(WorkstreamInitArgs),
 
     /// Switch the active repository-local Primer workstream
     Switch(WorkstreamSwitchArgs),
+}
+
+#[derive(Debug, Clone, Args)]
+pub struct WorkstreamListArgs {
+    /// Print machine-readable JSON output
+    #[arg(long)]
+    pub json: bool,
 }
 
 #[derive(Debug, Clone, Args)]

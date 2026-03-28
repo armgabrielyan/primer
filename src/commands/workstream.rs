@@ -1,32 +1,55 @@
 use anyhow::{Context, Result, bail};
 use comfy_table::Color;
+use serde::Serialize;
 use std::fs;
 use std::path::Path;
 
 use crate::adapter;
-use crate::cli::{Tool, WorkstreamInitArgs, WorkstreamSwitchArgs};
+use crate::cli::{Tool, WorkstreamInitArgs, WorkstreamListArgs, WorkstreamSwitchArgs};
 use crate::state::{self, PrimerState};
 use crate::ui;
 use crate::workflow::{self, WorkflowSourceKind};
 use crate::workstream;
 use crate::workstream_resume;
 
-pub fn list(workspace_hint: &Path) -> Result<()> {
+#[derive(Debug, Serialize)]
+struct WorkstreamListResponse {
+    repository: String,
+    active_workstream_id: Option<String>,
+    count: usize,
+    workstreams: Vec<WorkstreamListItem>,
+}
+
+#[derive(Debug, Serialize)]
+struct WorkstreamListItem {
+    id: String,
+    title: String,
+    active: bool,
+    current_milestone_id: String,
+    current_milestone_title: String,
+    verified: bool,
+    milestone_count: usize,
+    path: String,
+}
+
+pub fn list(workspace_hint: &Path, args: WorkstreamListArgs) -> Result<()> {
     let repo_root = workstream::ensure_repository_root(workspace_hint)?;
-    let active_state = active_primer_state(&repo_root)?;
-    let active_workstream_id = active_state
-        .as_ref()
-        .filter(|state| state.source.kind == WorkflowSourceKind::Workstream)
-        .map(|state| state.source.id.as_str());
-    let workstream_sources = workstream::discover(&repo_root)?;
+    let workstreams = collect_workstream_list(&repo_root)?;
+
+    if args.json {
+        let json = serde_json::to_string_pretty(&workstreams)
+            .context("failed to serialize workstream list output")?;
+        println!("{json}");
+        return Ok(());
+    }
 
     ui::section("Primer workstreams");
     println!();
 
-    if workstream_sources.is_empty() {
+    if workstreams.workstreams.is_empty() {
         ui::info(&format!(
             "No repository-local Primer workstreams found in {}",
-            ui::code(repo_root.display().to_string())
+            ui::code(&workstreams.repository)
         ));
         println!();
         ui::section("Next");
@@ -45,62 +68,61 @@ pub fn list(workspace_hint: &Path) -> Result<()> {
         },
         ui::KeyValueRow {
             key: "Active workstream".to_string(),
-            value: active_workstream_id.unwrap_or("none").to_string(),
-            value_color: active_workstream_id.map(|_| Color::Green),
+            value: workstreams
+                .active_workstream_id
+                .as_deref()
+                .unwrap_or("none")
+                .to_string(),
+            value_color: workstreams
+                .active_workstream_id
+                .as_ref()
+                .map(|_| Color::Green),
         },
         ui::KeyValueRow {
             key: "Count".to_string(),
-            value: workstream_sources.len().to_string(),
+            value: workstreams.count.to_string(),
             value_color: None,
         },
     ]);
 
     println!();
-    let rows = workstream_sources
-        .into_iter()
-        .map(|source| {
-            let workflow = workflow::load(&source)?;
-            let resumed_state = workstream_resume::resolve_for_workflow(&workflow, &repo_root)?;
-            let current_milestone_id =
-                workflow::resolve_initial_milestone(&workflow, Some(&resumed_state.milestone_id))?
-                    .id
-                    .clone();
-            let is_active = active_workstream_id == Some(source.id.as_str());
-            Ok(ui::WorkstreamRow {
-                id: source.id,
-                title: workflow.title,
-                status: if is_active {
-                    "active".to_string()
-                } else {
-                    "available".to_string()
-                },
-                status_color: if is_active {
-                    Color::Green
-                } else {
-                    Color::White
-                },
-                current_milestone: current_milestone_id,
-                verified: if resumed_state.verified_milestone_id.is_some() {
-                    "yes".to_string()
-                } else {
-                    "no".to_string()
-                },
-                verified_color: if resumed_state.verified_milestone_id.is_some() {
-                    Color::Green
-                } else {
-                    Color::Yellow
-                },
-                milestones: workflow.milestones.len().to_string(),
-                location: workflow.path.display().to_string(),
-            })
+    let rows = workstreams
+        .workstreams
+        .iter()
+        .map(|workstream| ui::WorkstreamRow {
+            id: workstream.id.clone(),
+            title: workstream.title.clone(),
+            status: if workstream.active {
+                "active".to_string()
+            } else {
+                "available".to_string()
+            },
+            status_color: if workstream.active {
+                Color::Green
+            } else {
+                Color::White
+            },
+            current_milestone: workstream.current_milestone_id.clone(),
+            verified: if workstream.verified {
+                "yes".to_string()
+            } else {
+                "no".to_string()
+            },
+            verified_color: if workstream.verified {
+                Color::Green
+            } else {
+                Color::Yellow
+            },
+            milestones: workstream.milestone_count.to_string(),
+            location: workstream.path.clone(),
         })
-        .collect::<Result<Vec<_>>>()?;
+        .collect::<Vec<_>>();
     ui::display_workstream_table(&rows);
 
     println!();
     ui::section("Next");
     let mut steps = Vec::new();
-    if let Some(active_workstream_id) = active_workstream_id {
+    if let Some(active_workstream_id) = workstreams.active_workstream_id.as_deref() {
         steps.push(format!(
             "Use {} to activate a different workstream",
             ui::code("primer workstream switch <workstream-id>")
@@ -123,6 +145,46 @@ pub fn list(workspace_hint: &Path) -> Result<()> {
     ui::numbered_steps(&steps);
 
     Ok(())
+}
+
+fn collect_workstream_list(repo_root: &Path) -> Result<WorkstreamListResponse> {
+    let active_state = active_primer_state(repo_root)?;
+    let active_workstream_id = active_state
+        .as_ref()
+        .filter(|state| state.source.kind == WorkflowSourceKind::Workstream)
+        .map(|state| state.source.id.clone());
+    let workstream_sources = workstream::discover(repo_root)?;
+
+    let workstreams = workstream_sources
+        .into_iter()
+        .map(|source| {
+            let workflow = workflow::load(&source)?;
+            let resumed_state = workstream_resume::resolve_for_workflow(&workflow, repo_root)?;
+            let current_milestone =
+                workflow::resolve_initial_milestone(&workflow, Some(&resumed_state.milestone_id))?;
+            let current_milestone_id = current_milestone.id.clone();
+            let current_milestone_title = current_milestone.title.clone();
+            let is_active = active_workstream_id.as_deref() == Some(source.id.as_str());
+
+            Ok(WorkstreamListItem {
+                id: source.id,
+                title: workflow.title,
+                active: is_active,
+                current_milestone_id,
+                current_milestone_title,
+                verified: resumed_state.verified_milestone_id.is_some(),
+                milestone_count: workflow.milestones.len(),
+                path: workflow.path.display().to_string(),
+            })
+        })
+        .collect::<Result<Vec<_>>>()?;
+
+    Ok(WorkstreamListResponse {
+        repository: repo_root.display().to_string(),
+        active_workstream_id,
+        count: workstreams.len(),
+        workstreams,
+    })
 }
 
 pub fn init(workspace_hint: &Path, args: WorkstreamInitArgs) -> Result<()> {

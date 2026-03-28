@@ -344,6 +344,8 @@ primer workstream init auth-refactor --goal "Reduce auth pipeline complexity" --
 primer workstream switch auth-refactor
 ```
 
+Use `primer workstream list --json` when you need the same repository-local workstream state in a machine-readable form.
+
 ## Workspace Model
 
 Primer uses two separate locations:
