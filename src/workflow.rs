@@ -1,8 +1,9 @@
 use anyhow::{Context, Result, anyhow, bail};
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
+use crate::paths;
 use crate::recipe::{self, Milestone};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
@@ -70,6 +71,39 @@ pub fn load(source: &WorkflowSourceRef) -> Result<Workflow> {
         WorkflowSourceKind::Recipe => load_recipe(source),
         WorkflowSourceKind::Workstream => load_workstream(source),
     }
+}
+
+pub fn load_from_path(path: &Path) -> Result<Workflow> {
+    let path = paths::absolute(path)?;
+
+    if path.join("recipe.yaml").is_file() {
+        let recipe = recipe::load_from_path(&path)?;
+        return Ok(Workflow {
+            source: WorkflowSourceRef {
+                kind: WorkflowSourceKind::Recipe,
+                id: recipe.id.clone(),
+                path: recipe.path.clone(),
+            },
+            title: recipe.title,
+            path: recipe.path,
+            stack_id: Some(recipe.stack_id),
+            milestones: recipe.milestones,
+        });
+    }
+
+    if path.join("workstream.yaml").is_file() {
+        let id = load_workstream_id(&path)?;
+        return load(&WorkflowSourceRef {
+            kind: WorkflowSourceKind::Workstream,
+            id,
+            path,
+        });
+    }
+
+    bail!(
+        "no workflow definition found in {}; expected recipe.yaml or workstream.yaml",
+        path.display()
+    )
 }
 
 pub fn resolve_initial_milestone<'a>(
@@ -169,4 +203,13 @@ fn load_workstream(source: &WorkflowSourceRef) -> Result<Workflow> {
             })
             .collect(),
     })
+}
+
+fn load_workstream_id(path: &Path) -> Result<String> {
+    let workstream_yaml = path.join("workstream.yaml");
+    let raw = fs::read_to_string(&workstream_yaml)
+        .with_context(|| format!("failed to read {}", workstream_yaml.display()))?;
+    let parsed: WorkstreamDoc = serde_yaml::from_str(&raw)
+        .with_context(|| format!("failed to parse {}", workstream_yaml.display()))?;
+    Ok(parsed.id)
 }

@@ -329,6 +329,7 @@ Use the CLI directly for setup, diagnostics, and terminal utilities:
 |---|---|---|
 | `primer list` | List available recipes | when you are exploring |
 | `primer recipe lint` | Lint local recipe structure and milestone quality guidance | when you are authoring or reviewing recipes |
+| `primer milestone lint` | Lint one milestone contract and sizing boundary from a workspace, recipe, or workstream | when you want feedback on the current or target milestone |
 | `primer init` | Create a workspace and generate adapter files | when you are starting a new project |
 | `primer doctor` | Check local prerequisites for a recipe milestone | before you begin or when setup is failing |
 | `primer workstream list` | List initialized brownfield workstreams in the current repository, including active state and saved progress | when you want to see what is available, active, and where each workstream will resume |
@@ -352,6 +353,7 @@ primer workstream switch auth-refactor
 
 Use `primer workstream list --json` when you need the same repository-local workstream state in a machine-readable form.
 Use `primer recipe lint --json` when you need recipe lint findings in a machine-readable form.
+Use `primer milestone lint --json` when you need one milestone's lint findings in a machine-readable form.
 
 ## Workspace Model
 

@@ -18,7 +18,7 @@ use anyhow::Result;
 use clap::{CommandFactory, Parser};
 use clap_complete::generate;
 
-use crate::cli::{Cli, Commands, RecipeCommands, WorkstreamCommands};
+use crate::cli::{Cli, Commands, MilestoneCommands, RecipeCommands, WorkstreamCommands};
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
@@ -36,6 +36,11 @@ fn main() -> Result<()> {
                 Commands::Recipe(args) => match args.command {
                     RecipeCommands::Lint(args) => {
                         commands::recipe::lint(&source, &workspace_hint, args)
+                    }
+                },
+                Commands::Milestone(args) => match args.command {
+                    MilestoneCommands::Lint(args) => {
+                        commands::milestone::lint(&workspace_hint, args)
                     }
                 },
                 Commands::Init(args) => commands::init::run(&source, args),

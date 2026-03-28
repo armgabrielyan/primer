@@ -28,6 +28,9 @@ pub enum Commands {
     /// Manage recipe authoring tasks
     Recipe(RecipeArgs),
 
+    /// Manage milestone authoring tasks
+    Milestone(MilestoneArgs),
+
     /// Initialize a Primer workspace from a recipe
     Init(InitArgs),
 
@@ -63,6 +66,32 @@ pub enum Commands {
         /// Shell to generate completions for
         shell: Shell,
     },
+}
+
+#[derive(Debug, Clone, Args)]
+pub struct MilestoneArgs {
+    #[command(subcommand)]
+    pub command: MilestoneCommands,
+}
+
+#[derive(Debug, Clone, Subcommand)]
+pub enum MilestoneCommands {
+    /// Lint one milestone contract and quality boundary
+    Lint(MilestoneLintArgs),
+}
+
+#[derive(Debug, Clone, Args)]
+pub struct MilestoneLintArgs {
+    /// Milestone identifier. Defaults to the current milestone in an active workspace or the first milestone in the target workflow.
+    pub milestone_id: Option<String>,
+
+    /// Lint a specific recipe or workstream directory directly
+    #[arg(long, value_name = "DIR")]
+    pub path: Option<PathBuf>,
+
+    /// Print machine-readable JSON output
+    #[arg(long)]
+    pub json: bool,
 }
 
 #[derive(Debug, Clone, Args)]
