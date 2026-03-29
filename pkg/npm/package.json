@@ -1,6 +1,6 @@
 {
   "name": "@armengabrielyan/primer",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "npm package for the Primer CLI. Installs the `primer` command for AI-guided project recipes and milestone workflows.",
   "repository": {
     "type": "git",
