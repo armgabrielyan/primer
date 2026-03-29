@@ -835,6 +835,8 @@ fn build_json_reports_contract_and_track_guidance() {
             .expect("track_guidance_markdown should be present")
             .contains("Explain the alpha task before coding.")
     );
+    assert_eq!(json["intent_file"], serde_json::Value::Null);
+    assert_eq!(json["intent_markdown"], serde_json::Value::Null);
     let next_steps = json["next_steps"]
         .as_array()
         .expect("next_steps should be an array");

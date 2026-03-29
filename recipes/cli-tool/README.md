@@ -2,6 +2,8 @@
 
 This recipe takes you from a runnable command-line script to a tested task tracker through 4 milestones.
 
+If you want the shortest guided product walkthrough for Primer itself, start with [../../docs/5-minute-primer.md](../../docs/5-minute-primer.md).
+
 ## Table of Contents
 
 - [What you will build](#what-you-will-build)

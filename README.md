@@ -22,6 +22,7 @@ Current recipes:
 ## Table of Contents
 
 - [Start Here](#start-here)
+- [5 Minute Demo](#5-minute-demo)
 - [How Primer Works](#how-primer-works)
 - [Why Primer](#why-primer)
 - [Is Primer Beginner-Friendly?](#is-primer-beginner-friendly)
@@ -52,9 +53,9 @@ If you want the fastest path from zero to building inside your AI coding agent:
 
 ```bash
 primer list
-primer init operating-system --tool codex --track learner --path ~/projects/my-os
-cd ~/projects/my-os
-primer doctor operating-system --milestone 01-bootloader
+primer init cli-tool --tool codex --track learner --path ~/projects/task-cli-demo
+cd ~/projects/task-cli-demo
+primer doctor cli-tool --milestone 01-bootstrap
 ```
 
 Use the terminal for setup:
@@ -77,6 +78,38 @@ Primer is designed so that:
 - Inside a generated workspace in a supported AI tool, you do the actual milestone work through generated actions such as `primer-build` and `primer-status`.
 
 If you are new to Primer, start with `--track learner`.
+
+If you want one short walkthrough instead of the general setup story, use the [5 minute demo](docs/5-minute-primer.md).
+
+## 5 Minute Demo
+
+The best quick demo path today is the beginner-friendly `cli-tool` recipe.
+
+What this path demonstrates:
+
+1. initialize a workspace
+2. inspect the current milestone
+3. watch verification fail before the code exists
+4. implement one milestone
+5. verify it successfully
+6. advance safely
+
+The full walkthrough lives in [docs/5-minute-primer.md](docs/5-minute-primer.md).
+
+Quick start:
+
+```bash
+primer init cli-tool --tool codex --track learner --path ~/projects/task-cli-demo
+cd ~/projects/task-cli-demo
+primer doctor cli-tool --milestone 01-bootstrap
+```
+
+Then open the workspace in your AI tool and use:
+
+- `primer-status`
+- `primer-build`
+- `primer-verify`
+- `primer-next-milestone`
 
 ## How Primer Works
 
@@ -319,7 +352,7 @@ Primer also exposes matching CLI commands such as `primer build`, `primer track`
 Use `primer status --json` when you need the current workflow state in a machine-readable form.
 Use `primer verify --json` when you need the latest verification result as a machine-readable event.
 Use `primer next-milestone --json` when you need the milestone advancement result as a machine-readable transition.
-Use `primer build --json` when you need the current milestone contract and track guidance in a machine-readable form.
+Use `primer build --json` when you need the current milestone contract, track guidance, and optional workstream intent context in a machine-readable form.
 
 ## CLI Setup Commands
 
@@ -352,6 +385,8 @@ primer workstream analyze --goal "Reduce auth pipeline complexity"
 primer workstream init auth-refactor --goal "Reduce auth pipeline complexity" --tool codex --track learner
 primer workstream switch auth-refactor
 ```
+
+`primer workstream init` also scaffolds `.primer/workstreams/<workstream-id>/workstream-intent.md` so you can keep goal, non-goals, constraints, and done-when short but durable while you rewrite the placeholder first milestone.
 
 Use `primer workstream list --json` when you need the same repository-local workstream state in a machine-readable form.
 Use `primer workstream analyze --json` when you need brownfield candidate suggestions in a machine-readable form.

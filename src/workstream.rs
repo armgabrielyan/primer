@@ -3,6 +3,7 @@ use serde::Serialize;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use crate::intent;
 use crate::paths;
 use crate::workflow::{WorkflowSourceKind, WorkflowSourceRef};
 
@@ -77,6 +78,18 @@ pub fn scaffold(repo_root: &Path, workstream_id: &str, goal: &str) -> Result<Pat
         format!(
             "failed to write {}",
             workstream_dir.join("workstream.yaml").display()
+        )
+    })?;
+    fs::write(
+        workstream_dir.join(intent::WORKSTREAM_INTENT_FILENAME),
+        intent::scaffold_workstream(goal),
+    )
+    .with_context(|| {
+        format!(
+            "failed to write {}",
+            workstream_dir
+                .join(intent::WORKSTREAM_INTENT_FILENAME)
+                .display()
         )
     })?;
     fs::write(

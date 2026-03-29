@@ -223,6 +223,8 @@ fn workstream_init_bootstraps_repo_local_workstream() {
         repo.join(".primer/workstreams/auth-refactor/workstream.yaml")
             .exists()
     );
+    let intent_path = repo.join(".primer/workstreams/auth-refactor/workstream-intent.md");
+    assert!(intent_path.exists());
     assert!(
         repo.join(
             ".primer/workstreams/auth-refactor/milestones/01-customize-first-milestone/spec.md"
@@ -235,6 +237,10 @@ fn workstream_init_bootstraps_repo_local_workstream() {
     assert!(context.contains("id: auth-refactor"));
     assert!(context.contains("track: builder"));
     assert!(!context.contains("stack_id:"));
+    let intent = fs::read_to_string(intent_path).expect("failed to read workstream intent");
+    assert!(intent.contains("# Workstream Intent"));
+    assert!(intent.contains("## Goal"));
+    assert!(intent.contains("Reduce auth pipeline complexity"));
 }
 
 #[test]
@@ -298,6 +304,9 @@ fn workstream_flow_uses_repo_local_source_and_runtime_layout() {
     );
     let build_stdout = String::from_utf8_lossy(&build.stdout);
     assert!(build_stdout.contains("Turn this scaffold into the first real brownfield milestone"));
+    assert!(build_stdout.contains("Workstream intent"));
+    assert!(build_stdout.contains("Non-goals"));
+    assert!(build_stdout.contains("Harden webhook processing"));
 
     let build_json = run_primer(&repo, &["build", "--json"]);
     assert!(
@@ -315,10 +324,28 @@ fn workstream_flow_uses_repo_local_source_and_runtime_layout() {
     );
     assert_eq!(json["track"], "learner");
     assert!(
+        json["intent_file"]
+            .as_str()
+            .expect("intent_file should be present")
+            .contains("workstream-intent.md")
+    );
+    assert!(
         json["contract_markdown"]
             .as_str()
             .expect("contract_markdown should be present")
             .contains("Turn this scaffold into the first real brownfield milestone")
+    );
+    assert!(
+        json["intent_markdown"]
+            .as_str()
+            .expect("intent_markdown should be present")
+            .contains("## Goal")
+    );
+    assert!(
+        json["intent_markdown"]
+            .as_str()
+            .expect("intent_markdown should be present")
+            .contains("Harden webhook processing")
     );
     assert!(
         json["track_guidance_markdown"]

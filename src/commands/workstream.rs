@@ -8,6 +8,7 @@ use crate::adapter;
 use crate::cli::{
     Tool, WorkstreamAnalyzeArgs, WorkstreamInitArgs, WorkstreamListArgs, WorkstreamSwitchArgs,
 };
+use crate::intent;
 use crate::state::{self, PrimerState};
 use crate::ui;
 use crate::workflow::{self, WorkflowSourceKind};
@@ -381,6 +382,15 @@ pub fn init(workspace_hint: &Path, args: WorkstreamInitArgs) -> Result<()> {
             value_color: None,
         },
         ui::KeyValueRow {
+            key: "Intent file".to_string(),
+            value: workflow
+                .path
+                .join(intent::WORKSTREAM_INTENT_FILENAME)
+                .display()
+                .to_string(),
+            value_color: Some(Color::DarkGrey),
+        },
+        ui::KeyValueRow {
             key: "State file".to_string(),
             value: context_path.display().to_string(),
             value_color: Some(Color::DarkGrey),
@@ -390,6 +400,16 @@ pub fn init(workspace_hint: &Path, args: WorkstreamInitArgs) -> Result<()> {
     println!();
     ui::section("Next");
     ui::numbered_steps(&[
+        format!(
+            "Refine {} with repo-specific non-goals, constraints, and done-when before you broaden milestone scope",
+            ui::code(
+                workflow
+                    .path
+                    .join(intent::WORKSTREAM_INTENT_FILENAME)
+                    .display()
+                    .to_string()
+            )
+        ),
         format!(
             "Run the {} to review the scaffolded first milestone",
             ui::reference("skill", "primer-build")

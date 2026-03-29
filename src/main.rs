@@ -2,6 +2,7 @@ mod adapter;
 mod bundled;
 mod cli;
 mod commands;
+mod intent;
 mod paths;
 mod recipe;
 mod retry_guidance;

@@ -5,6 +5,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::cli::BuildArgs;
+use crate::intent;
 use crate::state;
 use crate::ui;
 use crate::workflow;
@@ -17,8 +18,10 @@ struct BuildData {
     track: String,
     contract_file: PathBuf,
     agent_file: PathBuf,
+    intent_file: Option<PathBuf>,
     workspace: PathBuf,
     contract_markdown: String,
+    intent_markdown: Option<String>,
     track_guidance_markdown: String,
 }
 
@@ -29,8 +32,10 @@ struct BuildJson {
     track: String,
     contract_file: String,
     agent_file: String,
+    intent_file: Option<String>,
     workspace: String,
     contract_markdown: String,
+    intent_markdown: Option<String>,
     track_guidance_markdown: String,
     next_steps: Vec<String>,
 }
@@ -65,6 +70,7 @@ fn collect_build_data(workspace_hint: &Path) -> Result<BuildData> {
     let state = state::load_from_workspace(workspace_hint)?;
     let workflow = workflow::load(&state.source)?;
     let milestone = workflow::resolve_initial_milestone(&workflow, Some(&state.milestone_id))?;
+    let intent = intent::load_for_workflow(&workflow)?;
 
     let milestone_dir = workflow.path.join("milestones").join(&milestone.id);
     let spec_path = milestone_dir.join("spec.md");
@@ -94,8 +100,10 @@ fn collect_build_data(workspace_hint: &Path) -> Result<BuildData> {
         track: state.track,
         contract_file: spec_path,
         agent_file: agent_path,
+        intent_file: intent.as_ref().map(|doc| doc.path.clone()),
         workspace: state.workspace_root,
         contract_markdown: spec,
+        intent_markdown: intent.as_ref().map(|doc| doc.markdown.clone()),
         track_guidance_markdown: track_instructions.to_string(),
     })
 }
@@ -103,7 +111,7 @@ fn collect_build_data(workspace_hint: &Path) -> Result<BuildData> {
 fn render_human(data: &BuildData) {
     ui::section("Primer build");
     println!();
-    ui::key_value_table(&[
+    let mut rows = vec![
         ui::KeyValueRow {
             key: source_label(&data.source_kind).to_string(),
             value: data.source_id.clone(),
@@ -129,17 +137,32 @@ fn render_human(data: &BuildData) {
             value: data.agent_file.display().to_string(),
             value_color: Some(Color::DarkGrey),
         },
-        ui::KeyValueRow {
-            key: "Workspace".to_string(),
-            value: data.workspace.display().to_string(),
-            value_color: Some(Color::Cyan),
-        },
-    ]);
+    ];
+    if let Some(intent_file) = data.intent_file.as_ref() {
+        rows.push(ui::KeyValueRow {
+            key: "Intent file".to_string(),
+            value: intent_file.display().to_string(),
+            value_color: Some(Color::DarkGrey),
+        });
+    }
+    rows.push(ui::KeyValueRow {
+        key: "Workspace".to_string(),
+        value: data.workspace.display().to_string(),
+        value_color: Some(Color::Cyan),
+    });
+    ui::key_value_table(&rows);
 
     println!();
     ui::section("Milestone contract");
     println!();
     ui::print_markdown(data.contract_markdown.trim_end());
+
+    if let Some(intent_markdown) = data.intent_markdown.as_deref() {
+        println!();
+        ui::section("Workstream intent");
+        println!();
+        ui::print_markdown(intent_markdown.trim_end());
+    }
 
     println!();
     ui::section("Track guidance");
@@ -165,8 +188,13 @@ impl BuildJson {
             track: data.track.clone(),
             contract_file: data.contract_file.display().to_string(),
             agent_file: data.agent_file.display().to_string(),
+            intent_file: data
+                .intent_file
+                .as_ref()
+                .map(|path| path.display().to_string()),
             workspace: data.workspace.display().to_string(),
             contract_markdown: data.contract_markdown.clone(),
+            intent_markdown: data.intent_markdown.clone(),
             track_guidance_markdown: data.track_guidance_markdown.clone(),
             next_steps: json_next_steps(data),
         }
