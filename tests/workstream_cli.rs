@@ -68,6 +68,53 @@ fn make_executable(path: &Path) {
     }
 }
 
+#[cfg(windows)]
+fn canonicalize_for_assert(path: &Path) -> PathBuf {
+    let rendered = fs::canonicalize(path)
+        .expect("failed to canonicalize path")
+        .display()
+        .to_string();
+
+    if let Some(stripped) = rendered.strip_prefix(r"\\?\UNC\") {
+        return PathBuf::from(format!(r"\\{}", stripped));
+    }
+
+    if let Some(stripped) = rendered.strip_prefix(r"\\?\") {
+        return PathBuf::from(stripped);
+    }
+
+    PathBuf::from(rendered)
+}
+
+#[cfg(not(windows))]
+fn canonicalize_for_assert(path: &Path) -> PathBuf {
+    fs::canonicalize(path).expect("failed to canonicalize path")
+}
+
+fn path_contains_suffix(path: &str, suffix: &str) -> bool {
+    path.replace('\\', "/").contains(suffix)
+}
+
+fn write_verify_script(path: &Path, success_message: &str) {
+    #[cfg(windows)]
+    {
+        let cmd_path = path.with_extension("cmd");
+        write_file(
+            &cmd_path,
+            &format!("@echo off\r\necho {success_message}\r\n"),
+        );
+    }
+
+    #[cfg(not(windows))]
+    {
+        write_file(
+            path,
+            &format!("#!/usr/bin/env bash\nset -euo pipefail\necho {success_message}\n"),
+        );
+        make_executable(path);
+    }
+}
+
 #[test]
 fn workstream_list_reports_when_no_workstreams_exist() {
     let repo = temp_dir("workstream-list-empty");
@@ -91,7 +138,7 @@ fn workstream_list_reports_when_no_workstreams_exist() {
 fn workstream_list_json_reports_when_no_workstreams_exist() {
     let repo = temp_dir("workstream-list-empty-json");
     fs::create_dir_all(repo.join(".git")).expect("failed to create .git dir");
-    let repo = fs::canonicalize(&repo).expect("failed to canonicalize repo path");
+    let repo = canonicalize_for_assert(&repo);
 
     let list = run_primer(&repo, &["workstream", "list", "--json"]);
 
@@ -357,7 +404,11 @@ fn workstream_flow_uses_repo_local_source_and_runtime_layout() {
     let verify = run_primer(&repo, &["verify"]);
     assert!(!verify.status.success());
     let verify_stderr = String::from_utf8_lossy(&verify.stderr);
-    assert!(verify_stderr.contains("TODO: replace .primer/workstreams/billing-webhooks"));
+    assert!(path_contains_suffix(
+        &verify_stderr,
+        ".primer/workstreams/billing-webhooks"
+    ));
+    assert!(verify_stderr.contains("real verification script"));
     let records =
         verification_record_files(&repo, "billing-webhooks", "01-customize-first-milestone");
     assert_eq!(records.len(), 1);
@@ -370,11 +421,17 @@ fn workstream_flow_uses_repo_local_source_and_runtime_layout() {
     assert_eq!(json["source"]["id"], "billing-webhooks");
     assert_eq!(json["milestone"]["id"], "01-customize-first-milestone");
     assert_eq!(json["outcome"], "failed");
+    assert!(path_contains_suffix(
+        json["command_stderr"]
+            .as_str()
+            .expect("command_stderr should be present"),
+        ".primer/workstreams/billing-webhooks",
+    ));
     assert!(
         json["command_stderr"]
             .as_str()
             .expect("command_stderr should be present")
-            .contains("TODO: replace .primer/workstreams/billing-webhooks")
+            .contains("real verification script")
     );
 }
 
@@ -497,15 +554,12 @@ milestones:
     verification_summary: Verification passes when the second auth verification script exits successfully.
 "#,
     );
-    write_file(
+    write_verify_script(
         &repo.join(
             ".primer/workstreams/auth-refactor/milestones/01-customize-first-milestone/tests/verify.sh",
         ),
-        "#!/usr/bin/env bash\nset -euo pipefail\necho first auth milestone verified\n",
+        "first auth milestone verified",
     );
-    make_executable(&repo.join(
-        ".primer/workstreams/auth-refactor/milestones/01-customize-first-milestone/tests/verify.sh",
-    ));
     write_file(
         &repo.join(".primer/workstreams/auth-refactor/milestones/02-auth-observability/spec.md"),
         "# Milestone 02: Auth observability\n\nResume me after switching.\n",
@@ -529,15 +583,12 @@ Implement the observability milestone directly and run verification.
         ),
         "# Explanation: 02-auth-observability\n\nObserve auth state.\n",
     );
-    write_file(
+    write_verify_script(
         &repo.join(
             ".primer/workstreams/auth-refactor/milestones/02-auth-observability/tests/verify.sh",
         ),
-        "#!/usr/bin/env bash\nset -euo pipefail\necho second auth milestone verified\n",
+        "second auth milestone verified",
     );
-    make_executable(&repo.join(
-        ".primer/workstreams/auth-refactor/milestones/02-auth-observability/tests/verify.sh",
-    ));
 
     let verify_first = run_primer(&repo, &["verify"]);
     assert!(
