@@ -62,6 +62,10 @@ fn canonicalize_for_state(path: &Path) -> PathBuf {
     fs::canonicalize(path).expect("failed to canonicalize path")
 }
 
+fn path_contains_suffix(path: &str, suffix: &str) -> bool {
+    path.replace('\\', "/").contains(suffix)
+}
+
 fn setup_fixture(label: &str, verified_milestone_id: Option<&str>) -> (PathBuf, PathBuf) {
     let root = temp_dir(label);
     let primer_root = root.join("primer-root");
@@ -287,12 +291,12 @@ fn verify_json_reports_success_event() {
     assert_eq!(json["verification"]["attempts"], 1);
     assert_eq!(json["verification"]["passed_attempts"], 1);
     assert_eq!(json["verification_gate_after"]["state"], "open");
-    assert!(
+    assert!(path_contains_suffix(
         json["record_path"]
             .as_str()
-            .expect("record_path should be present")
-            .contains(".primer/runtime/verifications/01-alpha/")
-    );
+            .expect("record_path should be present"),
+        ".primer/runtime/verifications/01-alpha/",
+    ));
     assert!(
         json["command_stdout"]
             .as_str()
@@ -493,18 +497,18 @@ fn next_milestone_json_reports_advanced_transition() {
     assert_eq!(json["verification_cleared"], true);
     assert_eq!(json["previous_milestone"]["id"], "01-alpha");
     assert_eq!(json["current_milestone"]["id"], "02-beta");
-    assert!(
+    assert!(path_contains_suffix(
         json["spec_path"]
             .as_str()
-            .expect("spec_path should be present")
-            .contains("milestones/02-beta/spec.md")
-    );
-    assert!(
+            .expect("spec_path should be present"),
+        "milestones/02-beta/spec.md",
+    ));
+    assert!(path_contains_suffix(
         json["explanation_path"]
             .as_str()
-            .expect("explanation_path should be present")
-            .contains("milestones/02-beta/explanation.md")
-    );
+            .expect("explanation_path should be present"),
+        "milestones/02-beta/explanation.md",
+    ));
     let context = read_context(&workspace_root);
     assert!(context.contains("milestone_id: 02-beta"));
     assert!(context.contains("verified_milestone_id: null"));
@@ -811,18 +815,18 @@ fn build_json_reports_contract_and_track_guidance() {
     assert_eq!(json["source"]["id"], "demo");
     assert_eq!(json["current_milestone"]["id"], "01-alpha");
     assert_eq!(json["track"], "learner");
-    assert!(
+    assert!(path_contains_suffix(
         json["contract_file"]
             .as_str()
-            .expect("contract_file should be present")
-            .contains("milestones/01-alpha/spec.md")
-    );
-    assert!(
+            .expect("contract_file should be present"),
+        "milestones/01-alpha/spec.md",
+    ));
+    assert!(path_contains_suffix(
         json["agent_file"]
             .as_str()
-            .expect("agent_file should be present")
-            .contains("milestones/01-alpha/agent.md")
-    );
+            .expect("agent_file should be present"),
+        "milestones/01-alpha/agent.md",
+    ));
     assert!(
         json["contract_markdown"]
             .as_str()
