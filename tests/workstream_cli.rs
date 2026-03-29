@@ -303,7 +303,7 @@ fn workstream_flow_uses_repo_local_source_and_runtime_layout() {
         String::from_utf8_lossy(&build.stderr)
     );
     let build_stdout = String::from_utf8_lossy(&build.stdout);
-    assert!(build_stdout.contains("Turn this scaffold into the first real brownfield milestone"));
+    assert!(build_stdout.contains("Milestone contract"));
     assert!(build_stdout.contains("Workstream intent"));
     assert!(build_stdout.contains("Non-goals"));
     assert!(build_stdout.contains("Harden webhook processing"));
