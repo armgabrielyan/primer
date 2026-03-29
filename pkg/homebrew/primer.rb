@@ -10,7 +10,7 @@ class Primer < Formula
   desc "Primer CLI for AI-guided project recipes and milestone workflows"
   homepage "https://github.com/armgabrielyan/primer"
   license "MIT"
-  version "0.1.0" # x-release-please-version
+  version "0.2.0" # x-release-please-version
 
   on_macos do
     on_intel do

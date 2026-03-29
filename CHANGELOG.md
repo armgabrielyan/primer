@@ -1,5 +1,37 @@
 # Changelog
 
+## [0.2.0](https://github.com/armgabrielyan/primer/compare/v0.1.0...v0.2.0) (2026-03-29)
+
+
+### Features
+
+* add 5-minute primer documentation and intent handling ([259c44a](https://github.com/armgabrielyan/primer/commit/259c44ab5880cd0f4efef83d052c4cfbb702ce27))
+* add getting started documentation ([78de937](https://github.com/armgabrielyan/primer/commit/78de9372faa2b92f5d6a9f9c3fa0d7a8b71768a7))
+* add JSON examples for status and verification summaries ([a6e95eb](https://github.com/armgabrielyan/primer/commit/a6e95eb35911bd08d94a753a3ba716c3770d0190))
+* add milestone lint command ([d926c5f](https://github.com/armgabrielyan/primer/commit/d926c5f2381a9b3582ece2b49512bfe421f8e157))
+* add milestone metadata validation ([e8c04e8](https://github.com/armgabrielyan/primer/commit/e8c04e853b5f6050294adbcff652d2260ce1e042))
+* add recipe lint command ([e09208f](https://github.com/armgabrielyan/primer/commit/e09208fc12bf860af764975e27f875956c801dd2))
+* add recipe validation for community recipes ([2b00838](https://github.com/armgabrielyan/primer/commit/2b0083828ca5d4fabc3d939a0926a86113022039))
+* add retry guidance for failed verifications ([b59ad2b](https://github.com/armgabrielyan/primer/commit/b59ad2b223583ac59a4ca493cbb29a4e8510a22e))
+* add track command to switch between learner and builder tracks ([7b91cc2](https://github.com/armgabrielyan/primer/commit/7b91cc275d2e1ebc196258585eceb7937fb0ece6))
+* add verification history tracking ([cfa4160](https://github.com/armgabrielyan/primer/commit/cfa416047c872bbb7c7cce73a5d2ee2d0de64201))
+* add workstream analysis ([173ff49](https://github.com/armgabrielyan/primer/commit/173ff49989d3cd50d6b309fe5b60fd6fa4cada44))
+* add workstream command for milestone-driven workflows ([19d3e8f](https://github.com/armgabrielyan/primer/commit/19d3e8f6d15eafb3c396b0c360d9ec82e9cb809d))
+* add workstream command to CLI ([954c736](https://github.com/armgabrielyan/primer/commit/954c7362086d954c4543acc9d9d14e79e0cd7ba3))
+* add workstream resume functionality ([8417fa0](https://github.com/armgabrielyan/primer/commit/8417fa03a6248b6e7ecfc247f8286151fd619632))
+* add workstream state persistence ([ae1b685](https://github.com/armgabrielyan/primer/commit/ae1b685a38fdc5f88e380d0ff540d6ce163690f8))
+* add workstream UI and interactive selection ([f4e770b](https://github.com/armgabrielyan/primer/commit/f4e770b578b50672609bfdf4aa18ac193dced9f2))
+* improve workstream output with structured progress ([9f0324b](https://github.com/armgabrielyan/primer/commit/9f0324b9e2277b319dcaa0b4aff9718518c69b2b))
+* include verification history in status output ([8178724](https://github.com/armgabrielyan/primer/commit/8178724afe7dedbb8c521fd074594d38723b2da8))
+
+
+### Bug Fixes
+
+* build command flags and output ([bcb3054](https://github.com/armgabrielyan/primer/commit/bcb30547156f235060d2420fb5af012747df97df))
+* improve status output for current milestone ([9c70e2f](https://github.com/armgabrielyan/primer/commit/9c70e2ff301aff3cf4a8870a5cfdcd9f15ffc163))
+* milestone command aliases ([ceefd1a](https://github.com/armgabrielyan/primer/commit/ceefd1a18c16de3423c4e43447a771d5bd860524))
+* verify command flags ([de8524a](https://github.com/armgabrielyan/primer/commit/de8524a1db3f50ffea8d706ed83c2d08a89e239d))
+
 ## [0.1.0](https://github.com/armgabrielyan/primer/releases/tag/v0.1.0) (2026-03-22)
 
 
