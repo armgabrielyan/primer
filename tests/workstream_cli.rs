@@ -403,11 +403,12 @@ fn workstream_flow_uses_repo_local_source_and_runtime_layout() {
 
     let verify = run_primer(&repo, &["verify"]);
     assert!(!verify.status.success());
-    let verify_stderr = String::from_utf8_lossy(&verify.stderr);
+    let verify_stdout = String::from_utf8_lossy(&verify.stdout);
     assert!(path_contains_suffix(
-        &verify_stderr,
+        &verify_stdout,
         ".primer/workstreams/billing-webhooks"
     ));
+    let verify_stderr = String::from_utf8_lossy(&verify.stderr);
     assert!(verify_stderr.contains("real verification script"));
     let records =
         verification_record_files(&repo, "billing-webhooks", "01-customize-first-milestone");
@@ -422,9 +423,9 @@ fn workstream_flow_uses_repo_local_source_and_runtime_layout() {
     assert_eq!(json["milestone"]["id"], "01-customize-first-milestone");
     assert_eq!(json["outcome"], "failed");
     assert!(path_contains_suffix(
-        json["command_stderr"]
+        json["command"]["script_path"]
             .as_str()
-            .expect("command_stderr should be present"),
+            .expect("script_path should be present"),
         ".primer/workstreams/billing-webhooks",
     ));
     assert!(
