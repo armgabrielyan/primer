@@ -1,3 +1,5 @@
+
+
 # Primer
 
 Primer helps you build real software with AI agents one verified milestone at a time.
@@ -39,7 +41,7 @@ Current recipes:
   - [Sanity check after install](#sanity-check-after-install)
   - [Shell completions](#shell-completions)
 - [AI Tool Integration](#ai-tool-integration)
-- [Available Recipe](#available-recipe)
+- [Available Recipes](#available-recipes)
 - [Tracks](#tracks)
 - [Agent Workflow Actions](#agent-workflow-actions)
 - [CLI Setup Commands](#cli-setup-commands)
@@ -306,7 +308,7 @@ Those generated actions are the primary user experience. The CLI provides the un
 
 If your preferred AI tool can follow workspace instructions and run the local `primer` CLI, Primer can usually fit that workflow as well.
 
-## Available Recipe
+## Available Recipes
 
 Current catalog:
 
